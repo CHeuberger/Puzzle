@@ -46,7 +46,7 @@ public class Test extends GamePanel {
         Color.ORANGE};
 
     public static void main(String[] args) {
-        int type = 11;
+        int type = 10;
         if (args.length > 0) {
             try {
                 type = Integer.parseInt(args[0]);
