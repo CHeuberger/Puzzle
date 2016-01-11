@@ -424,8 +424,7 @@ public class GamePanel extends JPanel implements GameListener {
                     doDebug();
                     break;
                 default:
-                    assert false : cmd;
-                    break;
+                	throw new AssertionError("invalic command \"" + cmd + "\"");
             }
         }
     }

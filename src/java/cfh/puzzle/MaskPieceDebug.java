@@ -11,7 +11,6 @@ import java.awt.image.BufferedImage;
 public class MaskPieceDebug extends MaskPiece {
 
     private Rectangle base;
-    private Polygon shape;
 
     public MaskPieceDebug(int x, int y, Direction dir, 
                      BufferedImage msk, 
@@ -23,7 +22,6 @@ public class MaskPieceDebug extends MaskPiece {
     
     public void setDebugInfo(Rectangle rect, Polygon shp) {
         base = rect;
-        shape = shp;
     }
     
     @Override
@@ -38,7 +36,7 @@ public class MaskPieceDebug extends MaskPiece {
         for (Piece piece : getConnected()) {
             int dx = piece.getX() - getX();
             int dy = piece.getY() - getY();
-            System.out.printf("%s (%d,%d)%n", piece.getName(), dx, dy);
+            System.out.printf("%s (%d,%d)%n", piece.getName(), dx, dy);  // XXX
             if (dx > 0) {
                 if (dy > 0) {
                     gg.fillOval(base.width-19, base.height-19, 18, 18);
