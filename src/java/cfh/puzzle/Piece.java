@@ -28,7 +28,8 @@ public abstract class Piece extends JComponent
     private final Set<Piece> connected;
     
     private List<GameListener> listeners;
-
+    
+    protected boolean selected;
 
     private int pressedX;
     private int pressedY;
@@ -188,19 +189,22 @@ public abstract class Piece extends JComponent
     }
 
     @Override
+    @SuppressWarnings("incomplete-switch")
     public void mouseClicked(MouseEvent ev) {
         switch (ev.getButton()) {
             case BUTTON1: {
                 if (ev.getClickCount() == 2) {
                     boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
                     rotate(shift);
-                }
-                if ((ev.getModifiersEx() & CTRL_DOWN_MASK) != 0) {
+                } else if ((ev.getModifiersEx() & CTRL_DOWN_MASK) != 0) {
                     synchronized (this) {
                         for (GameListener listener : listeners) {
                             listener.pieceDisconnect(this);
                         }
                     }
+                } else if ((ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0) {
+                    selected = !selected;
+                    repaint();
                 }
                 break;
             }

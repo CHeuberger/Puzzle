@@ -129,7 +129,6 @@ public class GamePanel extends JPanel implements GameListener {
         Point myOffset = piece.getTileOffset();
         Set<Piece> group = piece.getGroup();
         for (Piece p : group) {
-//        { Piece p = piece;
             for (Piece neighbour : p.getNeighbours()) {
                 if (!group.contains(neighbour) && piece.getDir() == neighbour.getDir()) {
                     double dst = myOffset.distance(neighbour.getTileOffset());
@@ -219,6 +218,7 @@ public class GamePanel extends JPanel implements GameListener {
         setLocation(0, 0);
     }
     
+    @SuppressWarnings("unused")
     private void doArrange() {
         int w = getParent().getWidth();
         int h = getParent().getHeight();
@@ -323,7 +323,6 @@ public class GamePanel extends JPanel implements GameListener {
         }
     }
     
-    @SuppressWarnings("unused")
     private void doArrange2() {
         int w = getParent().getWidth();
         int h = getParent().getHeight();
@@ -412,7 +411,7 @@ public class GamePanel extends JPanel implements GameListener {
                     doHome();
                     break;
                 case CMD_ARRANGE:
-                    doArrange();
+                    doArrange2();
                     break;
                 case CMD_BACKGROUND:
                     doBackground();
