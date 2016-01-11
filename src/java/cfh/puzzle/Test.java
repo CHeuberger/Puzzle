@@ -394,11 +394,11 @@ public class Test extends GamePanel {
                 }
             } break;
 
-            case 60:  // rectangular/overlapped - correct orientation
+            case 60:
             case 61:
             case 62:
             case 63:
-            {
+            {  // rectangular/overlapped - correct orientation
                 final int rule = type - 60;
                 if (image == null) 
                     break;
@@ -435,11 +435,11 @@ public class Test extends GamePanel {
                 }
             } break;
             
-            case 70:  // rectangular overlapped rotated
+            case 70:
             case 71:
             case 72:
             case 73: 
-            {
+            {    // rectangular overlapped rotated
                 final int rule = type - 70;
                 Piece[][] quad = new Piece[X][Y];
                 boolean[][] used = new boolean[X][Y];
@@ -480,7 +480,9 @@ public class Test extends GamePanel {
                 }
             } break;
 
-            case 11: {  // maskS
+            case 10:
+            case 11:
+            {  // maskS
                 Piece[][] quad = new Piece[X][Y];
                 boolean[][] used = new boolean[X][Y];
                 int free = X * Y;
@@ -501,8 +503,9 @@ public class Test extends GamePanel {
                             case 3: dir = Direction.WEST; break;
                             default: dir = Direction.NORTH; break;
                         }                        
-                        MaskPieceDebug piece = new MaskPieceDebug(x, y, dir, masks[i][j], image, x, y, 2);
-                        piece.setDebugInfo(base, shapes[i][j]);
+                        MaskPiece piece = type == 10 ?
+                        		new MaskPiece(x, y, dir, masks[i][j], image, x, y, 2) :
+                        		new MaskPieceDebug(x, y, dir, masks[i][j], image, x, y, 2, base, shapes[i][j]);
                         piece.setName(String.format("%dx%d", j, i));
                         quad[i][j] = piece;
                         if (i > 0)

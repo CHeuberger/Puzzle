@@ -16,12 +16,11 @@ public class MaskPieceDebug extends MaskPiece {
                      BufferedImage msk, 
                      BufferedImage img, 
                      int ix, int iy, 
-                     int r) {
+                     int r, 
+                     Rectangle b, 
+                     Polygon shp) {
         super(x, y, dir, msk, img, ix, iy, r);
-    }
-    
-    public void setDebugInfo(Rectangle rect, Polygon shp) {
-        base = rect;
+        base = b;
     }
     
     @Override
