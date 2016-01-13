@@ -32,7 +32,7 @@ import cfh.FileChooser;
 
 public class Test extends GamePanel {
 
-    private static final String VERSION = "Puzzle by Carlos Heuberger - test v1.0";
+    private static final String VERSION = "Puzzle by Carlos Heuberger - test v1.1";
     
     private static final int MAXX = 2900;
     private static final int MAXY = 1800;
@@ -48,34 +48,57 @@ public class Test extends GamePanel {
         Color.ORANGE};
 
     public static void main(String[] args) {
-        String imageName = null;
+        String arg;
+        String imageName;
         BufferedImage image = null;
-        if (args.length > 0 && args[0].length() > 0 && !args[0].equals("-")) {
-            imageName = args[0];
+        int index = 0;
+        
+        while (index < args.length && args[index].startsWith("-")) {
+            String opt = args[index++].substring(1);
+            if (opt.length() == 0)
+                break;
+            
+            if ("help".startsWith(opt)) {
+                System.out.println(
+                        "java -jar puzzle.jar [<image> [<type> [<seed> [<count>x<template>]]]\n"
+                        + "    <image>     image name (from resource) or path\n"
+                        + "    <type>      10 = normal, 11 = debug, others for testing\n"
+                        + "    <seed>      random = random seed, else the seed number\n"
+                        + "    <count>     piece number\n"
+                        + "    <template>  50, 55, 60, 65, 85 = piece template"
+                        );
+                return;
+            }
+        }
+        
+        
+        if (index < args.length && args[index].length() > 0 && !args[index].equals("-")) {
+            arg = args[index++];
             URL url;
-            url = Test.class.getResource(imageName);
-            if (url == null && imageName.charAt(0) != '/') {
-                url = Test.class.getResource("resources/" + imageName);
+            url = Test.class.getResource(arg);
+            if (url == null && arg.charAt(0) != '/') {
+                url = Test.class.getResource("resources/" + arg);
             }
             if (url == null) {
                 try {
-                    image = ImageIO.read(new File(imageName));
+                    image = ImageIO.read(new File(arg));
+                    imageName = arg;
                 } catch (IOException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(null, new Object[] {ex, args[0], imageName});
+                    showMessageDialog(ex, arg);
                     return;
                 }
             } else {
                 try {
                 	image = ImageIO.read(url);
+                	imageName = url.toString();
                 } catch (IOException ex) {
                 	ex.printStackTrace();
-                	JOptionPane.showMessageDialog(null, new Object[] {ex, args[0], url});
+                	showMessageDialog(ex, arg, url);
                 	return;
                 }
             }
-        } 
-        if (imageName == null) {
+        } else {
             FileChooser chooser = new FileChooser();
             chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             chooser.setMultiSelectionEnabled(false);
@@ -86,7 +109,7 @@ public class Test extends GamePanel {
                 	image = ImageIO.read(file);
                 } catch (IOException ex) {
                 	ex.printStackTrace();
-                	JOptionPane.showMessageDialog(null, new Object[] {ex, args[0], file});
+                	showMessageDialog(ex, args[index], file);
                 	return;
                 }
             } else {
@@ -95,54 +118,60 @@ public class Test extends GamePanel {
         }
         
         int type = 10;
-        if (args.length > 1) {
+        if (index < args.length) {
+            arg = args[index++];
             try {
-                type = Integer.parseInt(args[1]);
+                type = Integer.parseInt(arg);
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, ex);
+                showMessageDialog(ex);
             }
         }
         
         long seed;
-        if (args.length > 2) {
-        	if (args[2].equals("random")) {
+        if (index < args.length) {
+            arg = args[index++];
+        	if (arg.equals("random")) {
         		seed = randomSeed();
         	} else {
         		try {
-        			seed = Long.parseLong(args[2]);
+        			seed = Long.parseLong(arg);
         		} catch (NumberFormatException ex) {
         			ex.printStackTrace();
-                	JOptionPane.showMessageDialog(null, new Object[] {ex, args[2]});
+                	showMessageDialog(ex, arg);
         			return;
         		}
         	}
         } else {
             seed = randomSeed();
         }
-        System.out.printf("Seed: %d%n", seed);
-        System.out.printf("Image: %s%n", imageName);
         
         Size size;
-        if (args.length > 3) {
-        	int i = args[3].toLowerCase().indexOf('x');
+        if (index < args.length) {
+            arg = args[index++];
+        	int i = arg.toLowerCase().indexOf('x');
         	if (i == -1) {
-            	JOptionPane.showMessageDialog(null, new Object[] {"Wrong format, expected <count>x<template>", args[3]});
+            	showMessageDialog("Wrong format, expected <count>x<template>", arg);
     			return;
         	} 
         	int count;
         	String templName;
         	try {
-        		count = Integer.parseInt(args[3].substring(0, i));
+        		count = Integer.parseInt(arg.substring(0, i));
         	} catch (NumberFormatException ex) {
         		ex.printStackTrace();
-        		JOptionPane.showMessageDialog(null, new Object[] {ex, args[3]});
+        		showMessageDialog(ex, arg);
         		return;
         	}
-        	templName = args[3].substring(i+1);
+        	templName = arg.substring(i+1);
         	Template templ = Template.get(templName);
         	size = new TemplateSizeImpl(count, templ);
         } else {
         	size = null;
+        }
+        
+        if (index < args.length) {
+            showMessageDialog("unrecognized argument, ignoring", Arrays.copyOfRange(args, index, args.length));
+            index = args.length;
         }
         
         if (size == null) {
@@ -150,9 +179,17 @@ public class Test extends GamePanel {
 			size = sizePanel.showAndGetSize();
         }
         
+        System.out.printf("Seed: %d%n", seed);
+        System.out.printf("Image: %s%n", imageName);
+        System.out.printf("Size: %s%n", size);
+        
         if (size != null) {
             new Test(type, image, size, seed, imageName);
         }
+    }
+    
+    private static void showMessageDialog(Object... message) {
+        JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
 	private static long randomSeed() {
@@ -233,7 +270,7 @@ public class Test extends GamePanel {
 //            int min = Math.max(sx, sy);
 //            X = (width + min/2) / min;
 //            Y = (height + min/2) / min;
-            System.out.printf("Size: %d x %d (%d)%n", X, Y, X*Y);
+            System.out.printf("Pieces: %dx%d=%d (%dx%d)%n", X, Y, X*Y, SX, SY);
             AffineTransform scale = AffineTransform.getScaleInstance(
                 (double) (X*SX-BORDER-BORDER) / image.getWidth(),
                 (double) (Y*SY-BORDER-BORDER) / image.getHeight());

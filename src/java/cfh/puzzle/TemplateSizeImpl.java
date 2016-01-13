@@ -75,4 +75,9 @@ public class TemplateSizeImpl implements Size {
     public int getEdgeColorChange() {
         return template.getEdgeColorChange();
     }
+    
+    @Override
+    public String toString() {
+        return count + "x" + template.getClass().getSimpleName();
+    }
 }
