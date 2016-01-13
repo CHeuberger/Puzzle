@@ -32,6 +32,8 @@ import cfh.FileChooser;
 
 public class Test extends GamePanel {
 
+    private static final String VERSION = "Puzzle by Carlos Heuberger - test v1.0";
+    
     private static final int MAXX = 2900;
     private static final int MAXY = 1800;
 
@@ -46,50 +48,58 @@ public class Test extends GamePanel {
         Color.ORANGE};
 
     public static void main(String[] args) {
-        int type = 10;
-        if (args.length > 0) {
-            try {
-                type = Integer.parseInt(args[0]);
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, ex);
-            }
-        }
-
-        String useImage;
+        String imageName = null;
         BufferedImage image = null;
-        if (args.length > 1 && !args[1].equals("-")) {
-            useImage = args[1].equalsIgnoreCase("none") ? null : args[1];
-            URL url = ClassLoader.getSystemClassLoader().getResource(useImage);
+        if (args.length > 0 && args[0].length() > 0 && !args[0].equals("-")) {
+            imageName = args[0];
+            URL url;
+            url = Test.class.getResource(imageName);
+            if (url == null && imageName.charAt(0) != '/') {
+                url = Test.class.getResource("resources/" + imageName);
+            }
             if (url == null) {
                 try {
-                    image = ImageIO.read(new File(useImage));
+                    image = ImageIO.read(new File(imageName));
                 } catch (IOException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(null, new Object[] {ex, args[1], useImage});
+                    JOptionPane.showMessageDialog(null, new Object[] {ex, args[0], imageName});
+                    return;
                 }
             } else {
                 try {
                 	image = ImageIO.read(url);
                 } catch (IOException ex) {
                 	ex.printStackTrace();
-                	JOptionPane.showMessageDialog(null, new Object[] {ex, args[1], url});
+                	JOptionPane.showMessageDialog(null, new Object[] {ex, args[0], url});
+                	return;
                 }
             }
-        } else {
+        } 
+        if (imageName == null) {
             FileChooser chooser = new FileChooser();
             chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             chooser.setMultiSelectionEnabled(false);
             if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                 File file = chooser.getSelectedFile();
-                useImage = file.getAbsolutePath();
+                imageName = file.getAbsolutePath();
                 try {
                 	image = ImageIO.read(file);
                 } catch (IOException ex) {
                 	ex.printStackTrace();
-                	JOptionPane.showMessageDialog(null, new Object[] {ex, args[1], file});
+                	JOptionPane.showMessageDialog(null, new Object[] {ex, args[0], file});
+                	return;
                 }
             } else {
                 return;
+            }
+        }
+        
+        int type = 10;
+        if (args.length > 1) {
+            try {
+                type = Integer.parseInt(args[1]);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(null, ex);
             }
         }
         
@@ -110,7 +120,7 @@ public class Test extends GamePanel {
             seed = randomSeed();
         }
         System.out.printf("Seed: %d%n", seed);
-        System.out.printf("Image: %s%n", useImage);
+        System.out.printf("Image: %s%n", imageName);
         
         Size size;
         if (args.length > 3) {
@@ -141,7 +151,7 @@ public class Test extends GamePanel {
         }
         
         if (size != null) {
-            new Test(type, image, size, seed);
+            new Test(type, image, size, seed, imageName);
         }
     }
 
@@ -159,7 +169,7 @@ public class Test extends GamePanel {
     private JFrame frame;
     private List<Piece> pieces;
 
-    private Test(int t, BufferedImage image, Size size, long seed) {
+    private Test(int t, BufferedImage image, Size size, long seed, String title) {
         super(size.getSizeX(), size.getSizeY());
 
         puzzleSize = size;
@@ -177,7 +187,7 @@ public class Test extends GamePanel {
         }
 
 
-        frame = new JFrame();
+        frame = new JFrame(VERSION + "- " + title);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setLayout(null);
         frame.add(this);

@@ -254,17 +254,17 @@ public class GamePanel extends JPanel implements GameListener {
             msg.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mousePressed(MouseEvent ev) {
-                    Container dialog = (Container)ev.getSource();
-                    while (dialog != null) {
-                        dialog = dialog.getParent();
-                        if (dialog instanceof Dialog) {
-                            ((Dialog) dialog).dispose();
+                    Container container = (Container)ev.getSource();
+                    while (container != null) {
+                        container = container.getParent();
+                        if (container instanceof Dialog) {
+                            ((Dialog) container).dispose();
                             break;
                         }
                     }
                 }
             });
-            JOptionPane.showMessageDialog(getParent(), msg);
+            JOptionPane.showMessageDialog(getParent(), msg, "Preview", JOptionPane.PLAIN_MESSAGE);
         }
     }
     
