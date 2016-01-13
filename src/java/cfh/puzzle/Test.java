@@ -691,7 +691,7 @@ public class Test extends GamePanel {
                         int w = rnd(PEGRADIUS+PEGRADIUS, PEGRADIUSDELTA);
                         int h = rnd(PEGRADIUS+PEGRADIUS, PEGHEIGHTDELTA);
                         gg.fillOval(x-w, BASE-h, w+w, h+h);
-                    } else if (extra < 999) {
+                    } else {
                         int x = rnd(SX/2, PEGPOSDELTA);
                         gg.fillRect(x-PEGWIDTH, 0, PEGWIDTH+PEGWIDTH, BASE+10);
                         int w = rnd(PEGRADIUS+2, PEGRADIUSDELTA);
