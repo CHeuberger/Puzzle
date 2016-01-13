@@ -55,8 +55,10 @@ public class Test extends GamePanel {
         
         while (index < args.length && args[index].startsWith("-")) {
             String opt = args[index++].substring(1);
-            if (opt.length() == 0)
+            if (opt.length() == 0) {
+                index -= 1;
                 break;
+            }
             
             if ("help".startsWith(opt)) {
                 System.out.println(
@@ -68,34 +70,41 @@ public class Test extends GamePanel {
                         + "    <template>  50, 55, 60, 65, 85 = piece template"
                         );
                 return;
+            } else {
+                showMessageDialog("unrecognized option", args[index-1]);
+                return;
             }
         }
         
         
-        if (index < args.length && args[index].length() > 0 && !args[index].equals("-")) {
+        if (index < args.length && args[index].length() > 0) {
             arg = args[index++];
-            URL url;
-            url = Test.class.getResource(arg);
-            if (url == null && arg.charAt(0) != '/') {
-                url = Test.class.getResource("resources/" + arg);
-            }
-            if (url == null) {
-                try {
-                    image = ImageIO.read(new File(arg));
-                    imageName = arg;
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                    showMessageDialog(ex, arg);
-                    return;
-                }
+            if (arg.equals("-") || arg.equals("none")) {
+                imageName = "none";
             } else {
-                try {
-                	image = ImageIO.read(url);
-                	imageName = url.toString();
-                } catch (IOException ex) {
-                	ex.printStackTrace();
-                	showMessageDialog(ex, arg, url);
-                	return;
+                URL url;
+                url = Test.class.getResource(arg);
+                if (url == null && arg.charAt(0) != '/') {
+                    url = Test.class.getResource("resources/" + arg);
+                }
+                if (url == null) {
+                    try {
+                        image = ImageIO.read(new File(arg));
+                        imageName = arg;
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                        showMessageDialog(ex, arg);
+                        return;
+                    }
+                } else {
+                    try {
+                        image = ImageIO.read(url);
+                        imageName = url.toString();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                        showMessageDialog(ex, arg, url);
+                        return;
+                    }
                 }
             }
         } else {
@@ -265,11 +274,6 @@ public class Test extends GamePanel {
             double min = Math.sqrt(area);
             X = (int) Math.round(width/min);
             Y = (int) Math.round(height/min);
-//            int sx = width / PREFX;
-//            int sy = height / PREFY;
-//            int min = Math.max(sx, sy);
-//            X = (width + min/2) / min;
-//            Y = (height + min/2) / min;
             System.out.printf("Pieces: %dx%d=%d (%dx%d)%n", X, Y, X*Y, SX, SY);
             AffineTransform scale = AffineTransform.getScaleInstance(
                 (double) (X*SX-BORDER-BORDER) / image.getWidth(),
