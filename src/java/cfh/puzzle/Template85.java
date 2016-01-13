@@ -18,5 +18,5 @@ public class Template85 extends Template {
     @Override public int getPegRadiusDelta() { return 4; }
     @Override public int getPegHeightDelta() { return 4; }
     
-    @Override public int getEdgeColorChange() { return 0x202020; }
+    @Override public int getEdgeColorChange() { return 64 * 0x010101; }
 }

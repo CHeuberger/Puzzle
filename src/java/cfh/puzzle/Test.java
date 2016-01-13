@@ -60,9 +60,9 @@ public class Test extends GamePanel {
             
             if ("help".startsWith(opt)) {
                 System.out.println(
-                        "java -jar puzzle.jar [<image> [<type> [<seed> [<count>x<template>]]]\n"
+                        "java -jar puzzle.jar [<image> [<count>x<template> [<seed> [<type> [<seed>]]]\n"
                         + "    <image>     image name (from resource) or path\n"
-                        + "    <type>      10 = normal, 11 = debug, others for testing\n"
+                        + "    <type>      11 = normal, 21 = debug, others for testing\n"
                         + "    <seed>      random = random seed, else the seed number\n"
                         + "    <count>     piece number\n"
                         + "    <template>  50, 55, 60, 65, 85 = piece template"
@@ -117,14 +117,28 @@ public class Test extends GamePanel {
             }
         }
         
-        int type = 10;
+        Size size;
         if (index < args.length) {
             arg = args[index++];
+            int i = arg.toLowerCase().indexOf('x');
+            if (i == -1) {
+                showMessageDialog("Wrong format, expected <count>x<template>", arg);
+                return;
+            } 
+            int count;
+            String templName;
             try {
-                type = Integer.parseInt(arg);
+                count = Integer.parseInt(arg.substring(0, i));
             } catch (NumberFormatException ex) {
-                showMessageDialog(ex);
+                ex.printStackTrace();
+                showMessageDialog(ex, arg);
+                return;
             }
+            templName = arg.substring(i+1);
+            Template templ = Template.get(templName);
+            size = new TemplateSizeImpl(count, templ);
+        } else {
+            size = null;
         }
         
         long seed;
@@ -145,28 +159,14 @@ public class Test extends GamePanel {
             seed = randomSeed();
         }
         
-        Size size;
+        int type = 11;
         if (index < args.length) {
             arg = args[index++];
-        	int i = arg.toLowerCase().indexOf('x');
-        	if (i == -1) {
-            	showMessageDialog("Wrong format, expected <count>x<template>", arg);
-    			return;
-        	} 
-        	int count;
-        	String templName;
-        	try {
-        		count = Integer.parseInt(arg.substring(0, i));
-        	} catch (NumberFormatException ex) {
-        		ex.printStackTrace();
-        		showMessageDialog(ex, arg);
-        		return;
-        	}
-        	templName = arg.substring(i+1);
-        	Template templ = Template.get(templName);
-        	size = new TemplateSizeImpl(count, templ);
-        } else {
-        	size = null;
+            try {
+                type = Integer.parseInt(arg);
+            } catch (NumberFormatException ex) {
+                showMessageDialog(ex);
+            }
         }
         
         if (index < args.length) {
@@ -529,7 +529,14 @@ public class Test extends GamePanel {
 
             case 10:
             case 11:
+            case 12:
+            case 13:
+            case 20:
+            case 21:
+            case 22:
+            case 23:
             {  // maskS
+                int rule = type % 10;
                 Piece[][] quad = new Piece[X][Y];
                 boolean[][] used = new boolean[X][Y];
                 int free = X * Y;
@@ -550,9 +557,9 @@ public class Test extends GamePanel {
                             case 3: dir = Direction.WEST; break;
                             default: dir = Direction.NORTH; break;
                         }                        
-                        MaskPiece piece = type == 10 ?
-                        		new MaskPiece(x, y, dir, masks[i][j], image, x, y, 2) :
-                        		new MaskPieceDebug(x, y, dir, masks[i][j], image, x, y, 2, base, shapes[i][j]);
+                        MaskPiece piece = type >= 20 ?
+                                new MaskPieceDebug(x, y, dir, masks[i][j], image, x, y, rule, base, shapes[i][j]) :
+                                new MaskPiece(x, y, dir, masks[i][j], image, x, y, rule);
                         piece.setName(String.format("%dx%d", j, i));
                         quad[i][j] = piece;
                         if (i > 0)
