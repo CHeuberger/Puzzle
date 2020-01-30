@@ -3,7 +3,6 @@ package cfh.puzzle;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Dialog;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -21,6 +20,7 @@ import java.util.Set;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JColorChooser;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -47,6 +47,8 @@ public class GamePanel extends JPanel implements GameListener {
     private final int sizeY;
 
     private JMenuItem showMenuItem;
+    
+    private JDialog preview = null;
     
     private final List<Piece> pieces = new ArrayList<>();
     
@@ -249,22 +251,21 @@ public class GamePanel extends JPanel implements GameListener {
     
     protected void doShow() {
         if (image != null) {
-            ImageIcon icon = new ImageIcon(image);
-            JLabel msg = new JLabel(icon);
-            msg.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mousePressed(MouseEvent ev) {
-                    Container container = (Container)ev.getSource();
-                    while (container != null) {
-                        container = container.getParent();
-                        if (container instanceof Dialog) {
-                            ((Dialog) container).dispose();
-                            break;
-                        }
+            if (preview == null) {
+                ImageIcon icon = new ImageIcon(image);
+                JLabel msg = new JLabel(icon);
+                preview = new JDialog(SwingUtilities.windowForComponent(this));
+                preview.setModal(false);
+                preview.add(msg);
+                msg.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mousePressed(MouseEvent ev) {
+                        preview.setVisible(false);
                     }
-                }
-            });
-            JOptionPane.showMessageDialog(getParent(), msg, "Preview", JOptionPane.PLAIN_MESSAGE);
+                });
+            }
+            preview.pack();
+            preview.setVisible(true);
         }
     }
     
