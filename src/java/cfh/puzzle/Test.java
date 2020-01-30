@@ -41,7 +41,7 @@ public class Test extends GamePanel {
         Color.RED,
         Color.GREEN,
         Color.BLUE,
-        Color.YELLOW,
+        Color.YELLOW.darker().darker(),
         Color.MAGENTA,
         Color.GRAY,
         Color.CYAN,
@@ -62,8 +62,8 @@ public class Test extends GamePanel {
             
             if ("help".startsWith(opt)) {
                 System.out.println(
-                        "java -jar puzzle.jar [<image> [<count>x<template> [<seed> [<type> [<seed>]]]\n"
-                        + "    <image>     image name (from resource) or path\n"
+                        "java -jar puzzle.jar [<image> [<count>x<template> [<seed> [<type>]]\n"
+                        + "    <image>     image name (from resource) or path, none = no image\n"
                         + "    <type>      11 = normal, 21 = debug, others for testing\n"
                         + "    <seed>      random = random seed, else the seed number\n"
                         + "    <count>     piece number\n"
@@ -565,6 +565,7 @@ public class Test extends GamePanel {
                                 new MaskPieceDebug(x, y, dir, masks[i][j], image, x, y, rule, base, shapes[i][j]) :
                                 new MaskPiece(x, y, dir, masks[i][j], image, x, y, rule);
                         piece.setName(String.format("%dx%d", j, i));
+                        piece.setBackground(Color.getHSBColor((float)i/X, 0.25f+0.75f*j/Y, 0.8f));
                         quad[i][j] = piece;
                         if (i > 0)
                             piece.addNeighbour(quad[i-1][j]);
@@ -599,10 +600,12 @@ public class Test extends GamePanel {
                 System.exit(-1);
         }
 
-        for (int i = 0; i < result.size(); i++) {
-            Piece piece = result.get(i);
-            piece.setForeground(Color.BLACK);
-            piece.setBackground(COLORS[i % COLORS.length]);
+        if (type < 10 || type > 29) {
+            for (int i = 0; i < result.size(); i++) {
+                Piece piece = result.get(i);
+                piece.setForeground(Color.BLACK);
+                piece.setBackground(COLORS[i % COLORS.length]);
+            }
         }
         return result;
     }

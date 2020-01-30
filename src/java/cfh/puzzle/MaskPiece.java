@@ -153,7 +153,7 @@ public class MaskPiece extends Piece {
         
         Graphics2D gg = (Graphics2D) g;
 
-        Image img = createImage();
+        Image img = isSelected() ? mask : createImage();
         if (img == null) {
             gg.clearRect(0, 0, getWidth(), getHeight());
         } else {

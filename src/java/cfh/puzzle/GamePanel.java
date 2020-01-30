@@ -27,6 +27,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 
 import cfh.FileChooser;
 
@@ -218,7 +219,6 @@ public class GamePanel extends JPanel implements GameListener {
         setLocation(0, 0);
     }
     
-    @SuppressWarnings("unused")
     private void doArrange() {
         int w = getParent().getWidth();
         int h = getParent().getHeight();
@@ -369,7 +369,7 @@ public class GamePanel extends JPanel implements GameListener {
 
         @Override
         public void mousePressed(MouseEvent ev) {
-            if (ev.getModifiers() != MouseEvent.BUTTON1_MASK) {
+            if (!SwingUtilities.isLeftMouseButton(ev)) {
                 return;
             }
             pressedX = ev.getX();
@@ -378,7 +378,7 @@ public class GamePanel extends JPanel implements GameListener {
 
         @Override
         public void mouseDragged(MouseEvent ev) {
-            if (ev.getModifiers() != MouseEvent.BUTTON1_MASK) {
+            if (!SwingUtilities.isLeftMouseButton(ev)) {
                 return;
             }
             gameX += ev.getX() - pressedX;
@@ -411,7 +411,11 @@ public class GamePanel extends JPanel implements GameListener {
                     doHome();
                     break;
                 case CMD_ARRANGE:
-                    doArrange2();
+                    if ((ev.getModifiers() & ev.CTRL_MASK) != 0) {
+                        doArrange();
+                    } else {
+                        doArrange2();
+                    }
                     break;
                 case CMD_BACKGROUND:
                     doBackground();

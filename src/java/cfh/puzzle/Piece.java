@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 public abstract class Piece extends JComponent
                             implements MouseListener, MouseMotionListener {
@@ -29,7 +30,7 @@ public abstract class Piece extends JComponent
     
     private List<GameListener> listeners;
     
-    protected boolean selected;
+    private boolean selected;
 
     private int pressedX;
     private int pressedY;
@@ -142,6 +143,10 @@ public abstract class Piece extends JComponent
         return done;
     }
     
+    public boolean isSelected() {
+        return selected;
+    }
+    
 
     public synchronized void addGameListener(GameListener l) {
         if (l != null) {
@@ -250,7 +255,7 @@ public abstract class Piece extends JComponent
 
     @Override
     public void mouseDragged(MouseEvent ev) {
-        if (ev.getModifiers() != BUTTON1_MASK) {
+        if (!SwingUtilities.isLeftMouseButton(ev)) {
             return;
         }
         int x = getX() + (ev.getX() - pressedX);
