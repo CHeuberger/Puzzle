@@ -9,12 +9,16 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
@@ -52,6 +56,8 @@ public class GamePanel extends JPanel implements GameListener {
     
     private final List<Piece> pieces = new ArrayList<>();
     
+    private final Map<Integer, Point> bookmarks = new HashMap<>();
+    
 
     public GamePanel(int sx, int sy) {
         if (sx < 1) throw new IllegalArgumentException("negative sx: " + sx);
@@ -64,6 +70,29 @@ public class GamePanel extends JPanel implements GameListener {
         DragListener dragListener = new DragListener();
         addMouseListener(dragListener);
         addMouseMotionListener(dragListener);
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent ev) {
+                int ch = ev.getExtendedKeyCode();
+                boolean ctrl = (ev.getModifiersEx() & ev.CTRL_DOWN_MASK) != 0;
+                if ((ev.VK_0 <= ch && ch <= ev.VK_9) 
+                        || (ev.VK_A <= ch && ch <= ev.VK_Z)
+                        || ch == ev.VK_SPACE) {
+                    Point actual = getLocation();
+                    if (ctrl && ch != ev.VK_SPACE) {
+                        bookmarks.put(ch, actual);
+                    } else {
+                        Point p = bookmarks.get(ch);
+                        if (p != null) {
+                            bookmarks.put(ev.VK_SPACE, actual);
+                            setLocation(p);
+                            repaint();
+                        }
+                    }
+                }
+            }
+        });
+        setFocusable(true);
     }
     
     protected void setImage(Image img) {

@@ -122,7 +122,7 @@ public class Test extends GamePanel {
                 	return;
                 }
             } else {
-                return;
+                imageName = "no image";
             }
         }
         
@@ -243,7 +243,6 @@ public class Test extends GamePanel {
         frame.setVisible(true);
         
         SwingUtilities.invokeLater(new Runnable() {
-            
             @Override
             public void run() {
                 doShow();
