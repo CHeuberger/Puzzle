@@ -1,6 +1,5 @@
 package cfh.puzzle;
 
-import static java.util.stream.Collectors.*;
 import static javax.swing.JOptionPane.*;
 
 import java.awt.AlphaComposite;
@@ -31,8 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
-
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -301,6 +298,7 @@ public class Test extends GamePanel {
 
     private void save(ObjectOutputStream output) throws IOException {
         encodeImage(getBackgroundImage(), output);
+        output.writeObject(getBackground());
         List<Piece> pieces = getPieces();
         pieces.stream().forEach(p -> p.id = -1);
         output.writeInt(pieces.size());
@@ -318,6 +316,11 @@ public class Test extends GamePanel {
     
     private void load(ObjectInputStream input) throws IOException {
         setBackgroundImage(decodeImage(input));
+        try {
+            setBackground((Color) input.readObject());
+        } catch (ClassNotFoundException ex) {
+            throw new IOException("reading background color", ex);
+        }
         List<Piece> pieces = getPieces();
         int count = input.readInt();
         if (count != pieces.size())
