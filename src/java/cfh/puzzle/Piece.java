@@ -34,7 +34,8 @@ public abstract class Piece extends JComponent
 
     private int pressedX;
     private int pressedY;
-
+    
+    transient int id;
 
     protected Piece(int x, int y) {
         this(x, y, Direction.NORTH);
@@ -287,4 +288,25 @@ public abstract class Piece extends JComponent
     @Override
     public void mouseMoved(MouseEvent ev) {
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        if (obj == null || obj.getClass() != this.getClass())
+            return false;
+        Piece other = (Piece) obj;
+        return other.tileX == this.tileX && other.tileY == this.tileY;
+    }
+    
+    @Override
+    public int hashCode() {
+        return 17 * tileX + tileY;
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("%3d %3d %1.1s", tileX, tileY, dir);
+    }
+    
 }

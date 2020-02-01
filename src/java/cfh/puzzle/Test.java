@@ -1,5 +1,6 @@
 package cfh.puzzle;
 
+import static java.util.stream.Collectors.*;
 import static javax.swing.JOptionPane.*;
 
 import java.awt.AlphaComposite;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
@@ -300,12 +302,17 @@ public class Test extends GamePanel {
     private void save(ObjectOutputStream output) throws IOException {
         encodeImage(getBackgroundImage(), output);
         List<Piece> pieces = getPieces();
+        pieces.stream().forEach(p -> p.id = -1);
         output.writeInt(pieces.size());
+        int i = 0;
         for (Piece piece : pieces) {
+            piece.id = i++;
             output.writeInt(piece.getX());
             output.writeInt(piece.getY());
-            output.writeObject(piece.getDir());
             output.writeInt(getComponentZOrder(piece));
+            output.writeObject(piece.getDir());
+            int[] connections = piece.getConnected().stream().mapToInt(p -> p.id).filter(id -> id != -1).toArray();
+            output.writeObject(connections);
         }
     }
     
@@ -318,16 +325,21 @@ public class Test extends GamePanel {
         for (Piece piece : pieces) {
             int x = input.readInt();
             int y = input.readInt();
+            int z = input.readInt();
             Direction dir;
+            int[] connections;
             try {
                 dir = (Direction) input.readObject();
+                connections = (int[]) input.readObject();
             } catch (ClassNotFoundException ex) {
                 throw new IOException("reading piece " + piece, ex);
             }
-            int z = input.readInt();
             piece.setLocation(x, y);
-            piece.setDir(dir);
             setComponentZOrder(piece, z);
+            piece.setDir(dir);
+            for (int id : connections) {
+                piece.connect(pieces.get(id));
+            }
         }
         repaint();
     }
