@@ -79,12 +79,12 @@ public class GamePanel extends JPanel implements GameListener {
                         || ch == KEY_HISTORY) {
                     Point actual = getLocation();
                     if (ctrl && ch != KEY_HISTORY) {
-                        bookmarks.put(ch, actual);
+                        putBookmark(ch, actual);
                         Toolkit.getDefaultToolkit().beep();
                     } else {
                         Point p = bookmarks.get(ch);
                         if (p != null) {
-                            bookmarks.put(ev.VK_SPACE, actual);
+                            putBookmark(KEY_HISTORY, actual);
                             setLocation(p);
                             repaint();
                         }
@@ -115,6 +115,14 @@ public class GamePanel extends JPanel implements GameListener {
     
     protected List<Piece> getPieces() {
         return Collections.unmodifiableList(pieces);
+    }
+    
+    protected Map<Integer, Point> getBookmarks() {
+        return Collections.unmodifiableMap(bookmarks);
+    }
+    
+    protected void putBookmark(Integer key, Point point) {
+        bookmarks.put(key, point);
     }
 
     protected JPopupMenu createPopup() {
@@ -259,7 +267,7 @@ public class GamePanel extends JPanel implements GameListener {
     private void doHome(ActionEvent ev) {
         Point location = getLocation();
         if (location.x != 0 || location.y != 0) {
-            bookmarks.put(KEY_HISTORY, location);
+            putBookmark(KEY_HISTORY, location);
         }
         setLocation(0, 0);
     }

@@ -5,6 +5,7 @@ import static javax.swing.JOptionPane.*;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -29,6 +30,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
@@ -234,7 +237,7 @@ public class Test extends GamePanel {
 	}
 
 
-    private static final int MAGIC = 0x55F0_0101;
+    private static final int MAGIC = 0x55F0_0102;
 	
     private final Size puzzleSize;
     private final int type;
@@ -299,6 +302,8 @@ public class Test extends GamePanel {
     private void save(ObjectOutputStream output) throws IOException {
         encodeImage(getBackgroundImage(), output);
         output.writeObject(getBackground());
+        output.writeObject(getBookmarks());
+        
         List<Piece> pieces = getPieces();
         pieces.stream().forEach(p -> p.id = -1);
         output.writeInt(pieces.size());
@@ -316,11 +321,17 @@ public class Test extends GamePanel {
     
     private void load(ObjectInputStream input) throws IOException {
         setBackgroundImage(decodeImage(input));
+        Map<?, ?> marks;
         try {
             setBackground((Color) input.readObject());
+            marks = (Map<?, ?>) input.readObject();
         } catch (ClassNotFoundException ex) {
             throw new IOException("reading background color", ex);
         }
+        for (Entry<?, ?> entry : marks.entrySet()) {
+            putBookmark((Integer)entry.getKey() , (Point)entry.getValue());
+        }
+
         List<Piece> pieces = getPieces();
         int count = input.readInt();
         if (count != pieces.size())
