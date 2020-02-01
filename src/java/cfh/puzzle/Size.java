@@ -1,6 +1,8 @@
 package cfh.puzzle;
 
-public interface Size {
+import java.io.Serializable;
+
+public interface Size extends Serializable {
 
     public int getCount();
     

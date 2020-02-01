@@ -14,11 +14,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +39,7 @@ public class GamePanel extends JPanel implements GameListener {
 
     static final int DELTA_SNAP = 8;
 
+    private final String title;
     private BufferedImage image = null;
     private BufferedImage background = null;
     
@@ -58,9 +56,10 @@ public class GamePanel extends JPanel implements GameListener {
     private static final Integer KEY_HISTORY = KeyEvent.VK_SPACE; 
     
 
-    public GamePanel(int sx, int sy) {
+    public GamePanel(String title, int sx, int sy) {
         if (sx < 1) throw new IllegalArgumentException("negative sx: " + sx);
         if (sy < 1) throw new IllegalArgumentException("negative sy: " + sy);
+        this.title = title;
         sizeX = sx;
         sizeY = sy;
         
@@ -99,16 +98,26 @@ public class GamePanel extends JPanel implements GameListener {
         image = img;
         showMenuItem.setEnabled(image != null);
     }
+    
+    protected BufferedImage getImage() {
+        return image;
+    }
 
-    private JPopupMenu createPopup() {
+    protected void setBackgroundImage(BufferedImage img) {
+        background = img;
+        repaint();
+    }
+    
+    protected BufferedImage getBackgroundImage() {
+        return background;
+    }
+
+    protected JPopupMenu createPopup() {
         JMenuItem home = new JMenuItem("Home");
         home.addActionListener(this::doHome);
         
         JMenuItem arrange = new JMenuItem("Arrange");
         arrange.addActionListener(this::doArrange);
-        
-        JMenuItem save = new JMenuItem("Save");
-        save.addActionListener(this::doSave);
         
         showMenuItem = new JMenuItem("Show");
         showMenuItem.addActionListener(this::doShow);
@@ -123,7 +132,6 @@ public class GamePanel extends JPanel implements GameListener {
         JPopupMenu menu = new JPopupMenu();
         menu.add(home);
         menu.add(showMenuItem);
-        menu.add(save);
         menu.addSeparator();
         menu.add(bg);
         menu.addSeparator();
@@ -319,6 +327,7 @@ public class GamePanel extends JPanel implements GameListener {
                 ImageIcon icon = new ImageIcon(image);
                 JLabel msg = new JLabel(icon);
                 preview = new JDialog(SwingUtilities.windowForComponent(this));
+                preview.setTitle("Preview - " + title);
                 preview.setModal(false);
                 preview.add(msg);
                 msg.addMouseListener(new MouseAdapter() {
@@ -332,22 +341,6 @@ public class GamePanel extends JPanel implements GameListener {
             preview.setVisible(true);
         }
     }
-    
-    private void doSave(ActionEvent ev) {
-        FileChooser chooser = new FileChooser();
-        if (chooser.showSaveDialog(getParent()) == JFileChooser.APPROVE_OPTION) {
-            File file = chooser.getSelectedFile();
-            Object[] msg = { "File already exists!", file.getAbsolutePath(), "Overwrite?" };
-            if (file.exists() && showConfirmDialog(getParent(), msg, "Confirm", OK_CANCEL_OPTION) != OK_OPTION)
-                return;
-            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(file))) {
-                output.writeObject(this);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                error(ex.getClass().getSimpleName(), "Exception saving to", file.getAbsolutePath());
-            }
-        }
-    }
 
     private void doBackground(ActionEvent ev) {
         FileChooser chooser = new FileChooser();
@@ -356,8 +349,7 @@ public class GamePanel extends JPanel implements GameListener {
             if (file.isFile()) {
                 try {
                     BufferedImage img = ImageIO.read(file);
-                    background = img;
-                    repaint();
+                    setBackgroundImage(img);
                 } catch (IOException ex) {
                     ex.printStackTrace();
                     error(ex.getClass().getSimpleName(), "Exception reading background from", file.getAbsolutePath());
@@ -367,9 +359,8 @@ public class GamePanel extends JPanel implements GameListener {
                     case "":
                     case "empty":
                     case "none":
-                        background = null;
                         setBackground(null);
-                        repaint();
+                        setBackgroundImage(null);
                         break;
                     case "c":
                     case "col":
@@ -377,9 +368,8 @@ public class GamePanel extends JPanel implements GameListener {
                     case "solid":
                         Color color = JColorChooser.showDialog(getParent(), "Background", getBackground());
                         if (color != null) {
-                            background = null;
                             setBackground(color);
-                            repaint();
+                            setBackgroundImage(null);
                         }
                         break;
                     default:
@@ -403,21 +393,12 @@ public class GamePanel extends JPanel implements GameListener {
         }
     }
     
-    private void error(String title, Object... msg) {
+    protected void error(String title, Object... msg) {
         showMessageDialog(getParent(), msg, title, ERROR_MESSAGE);
     }
     
     private static boolean isCtrl(ActionEvent ev) {
         return (ev.getModifiers() & ev.CTRL_MASK) != 0;
-    }
-    
-    private static byte[] encodeImage(BufferedImage image) throws IOException {
-        if (image == null)
-            return new byte[0];
-        try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
-            ImageIO.write(image, "PNG", result);
-            return result.toByteArray();
-        }
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////

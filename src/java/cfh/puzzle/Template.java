@@ -1,7 +1,8 @@
 package cfh.puzzle;
 
+import java.io.Serializable;
 
-public abstract class Template {
+public abstract class Template implements Serializable {
 
     public static Template get(String name) {
 		switch (name) {

@@ -1,10 +1,13 @@
 package cfh.puzzle;
 
+import static javax.swing.JOptionPane.*;
+
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
@@ -14,8 +17,14 @@ import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,14 +34,13 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import cfh.FileChooser;
 
 public class Test extends GamePanel {
 
-    private static final String VERSION = "Puzzle by Carlos Heuberger - test v1.1";
+    private static final String VERSION = "Puzzle by Carlos Heuberger - test v1.2";
     
     private static final int MAXX = 5000;
     private static final int MAXY = 2048;
@@ -71,7 +79,7 @@ public class Test extends GamePanel {
                         );
                 return;
             } else {
-                showMessageDialog("unrecognized option", args[index-1]);
+                errorMessage("unrecognized option", args[index-1]);
                 return;
             }
         }
@@ -93,7 +101,7 @@ public class Test extends GamePanel {
                         imageName = arg;
                     } catch (IOException ex) {
                         ex.printStackTrace();
-                        showMessageDialog(ex, arg);
+                        errorMessage(ex, arg);
                         return;
                     }
                 } else {
@@ -102,7 +110,7 @@ public class Test extends GamePanel {
                         imageName = url.toString();
                     } catch (IOException ex) {
                         ex.printStackTrace();
-                        showMessageDialog(ex, arg, url);
+                        errorMessage(ex, arg, url);
                         return;
                     }
                 }
@@ -118,8 +126,27 @@ public class Test extends GamePanel {
                 	image = ImageIO.read(file);
                 } catch (IOException ex) {
                 	ex.printStackTrace();
-                	showMessageDialog(ex, args[index], file);
+                	errorMessage(ex, args[index], file);
                 	return;
+                }
+                if (image == null) {
+                    try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(file))) {
+                        int magic = input.readInt();
+                        if (magic == MAGIC) {
+                            int type = input.readInt();
+                            long seed = input.readLong();
+                            Size size = (Size) input.readObject();
+                            image = decodeImage(input);
+                            Test test = new Test(type, image, size, seed, file.getAbsolutePath());
+                            test.setBackgroundImage(decodeImage(input));
+                        } else {
+                            errorMessage("unable to load image from", imageName);
+                        }
+                    } catch (IOException | ClassNotFoundException ex) {
+                        ex.printStackTrace();
+                        errorMessage(ex, "reading from", file.getAbsolutePath());
+                    }
+                    return;
                 }
             } else {
                 imageName = "no image";
@@ -131,7 +158,7 @@ public class Test extends GamePanel {
             arg = args[index++];
             int i = arg.toLowerCase().indexOf('x');
             if (i == -1) {
-                showMessageDialog("Wrong format, expected <count>x<template>", arg);
+                errorMessage("Wrong format, expected <count>x<template>", arg);
                 return;
             } 
             int count;
@@ -140,7 +167,7 @@ public class Test extends GamePanel {
                 count = Integer.parseInt(arg.substring(0, i));
             } catch (NumberFormatException ex) {
                 ex.printStackTrace();
-                showMessageDialog(ex, arg);
+                errorMessage(ex, arg);
                 return;
             }
             templName = arg.substring(i+1);
@@ -160,7 +187,7 @@ public class Test extends GamePanel {
         			seed = Long.parseLong(arg);
         		} catch (NumberFormatException ex) {
         			ex.printStackTrace();
-                	showMessageDialog(ex, arg);
+        			errorMessage(ex, arg);
         			return;
         		}
         	}
@@ -174,12 +201,12 @@ public class Test extends GamePanel {
             try {
                 type = Integer.parseInt(arg);
             } catch (NumberFormatException ex) {
-                showMessageDialog(ex);
+                errorMessage(ex);
             }
         }
         
         if (index < args.length) {
-            showMessageDialog("unrecognized argument, ignoring", Arrays.copyOfRange(args, index, args.length));
+            errorMessage("unrecognized argument, ignoring", Arrays.copyOfRange(args, index, args.length));
             index = args.length;
         }
         
@@ -197,8 +224,8 @@ public class Test extends GamePanel {
         }
     }
     
-    private static void showMessageDialog(Object... message) {
-        JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+    protected static void errorMessage(Object... msg) {
+        showMessageDialog(null, msg, "Error", ERROR_MESSAGE);
     }
 
 	private static long randomSeed() {
@@ -208,30 +235,34 @@ public class Test extends GamePanel {
 	}
 
 
+    private static final int MAGIC = 0x55F0_0101;
+	
     private final Size puzzleSize;
     private final int type;
-
+    private final long seed;
+    
     private final Random random;
 
     private JFrame frame;
 
-    private Test(int t, BufferedImage image, Size size, long seed, String title) {
-        super(size.getSizeX(), size.getSizeY());
+    private Test(int type, BufferedImage image, Size size, long seed, String title) {
+        super(title, size.getSizeX(), size.getSizeY());
 
-        puzzleSize = size;
-        type = t;
-
+        this.puzzleSize = size;
+        this.type = type;
+        this.seed = seed;
+        
         random = new Random(seed);
-
-        setLayout(null);
-        setOpaque(false);
-        setSize(MAXX, MAXY);
 
         for (Piece piece : createPieces(image)) {
             add(piece);
         }
-
-        frame = new JFrame(VERSION + "- " + title);
+        
+        setLayout(null);
+        setOpaque(false);
+        setSize(MAXX, MAXY);
+        
+        frame = new JFrame(VERSION + " - " + title);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setLayout(null);
         frame.add(this);
@@ -240,14 +271,40 @@ public class Test extends GamePanel {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                doShow(null);
+        doShow(null);
+    }
+    
+    private void doSave(ActionEvent ev) {
+        FileChooser chooser = new FileChooser();
+        if (chooser.showSaveDialog(getParent()) == JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            Object[] msg = { "File already exists!", file.getAbsolutePath(), "Overwrite?" };
+            if (file.exists() && showConfirmDialog(getParent(), msg, "Confirm", OK_CANCEL_OPTION) != OK_OPTION)
+                return;
+            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(file))) {
+                output.writeInt(MAGIC);
+                output.writeInt(type);
+                output.writeLong(seed);
+                output.writeObject(puzzleSize);
+                encodeImage(getImage(), output);
+                encodeImage(getBackgroundImage(), output);
+                // TODO chains
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                error(ex.getClass().getSimpleName(), "Exception saving to", file.getAbsolutePath());
             }
-        });
+        }
     }
 
+    @Override
+    protected JPopupMenu createPopup() {
+        JPopupMenu popup = super.createPopup();
+        JMenuItem save = new JMenuItem("Save");
+        save.addActionListener(this::doSave);
+        popup.add(save);
+        return popup;
+    }
+    
     private List<Piece> createPieces(BufferedImage image) {
         List<Piece> result = new ArrayList<Piece>();
         BufferedImage mask1 = loadImage("resources/mask1.png");
@@ -300,6 +357,7 @@ public class Test extends GamePanel {
                 }
             }
         }
+        
         setImage(image);
 
         switch (type) {
@@ -815,11 +873,36 @@ public class Test extends GamePanel {
                 return ImageIO.read(url);
             } catch (IOException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, ex);
+                error(ex.getClass().getSimpleName(), "Exception loading image", url);
             }
         } else {
-            JOptionPane.showMessageDialog(null, "could not load " + filename);
+            error("Error", "Unable to load", filename);
         }
         return null;
+    }
+    
+    private static void encodeImage(BufferedImage image, ObjectOutputStream output) throws IOException {
+        if (image == null) {
+            output.writeInt(0);
+        } else {
+            byte[] data;
+            try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
+                ImageIO.write(image, "PNG", result);
+                data = result.toByteArray();
+            }
+            output.writeInt(data.length);
+            output.write(data);
+        }
+    }
+    
+    private static BufferedImage decodeImage(ObjectInputStream input) throws IOException {
+        int length = input.readInt();
+        if (length == 0)
+            return null;
+        byte[] data = new byte[length];
+        input.readFully(data);
+        try (ByteArrayInputStream stream = new ByteArrayInputStream(data)) {
+            return ImageIO.read(stream);
+        }
     }
 }
