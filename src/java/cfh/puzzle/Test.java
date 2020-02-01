@@ -138,7 +138,7 @@ public class Test extends GamePanel {
                             Size size = (Size) input.readObject();
                             image = decodeImage(input);
                             Test test = new Test(type, image, size, seed, file.getAbsolutePath());
-                            test.setBackgroundImage(decodeImage(input));
+                            test.load(input);
                         } else {
                             errorMessage("unable to load image from", imageName);
                         }
@@ -240,6 +240,7 @@ public class Test extends GamePanel {
     private final Size puzzleSize;
     private final int type;
     private final long seed;
+    private final BufferedImage image;
     
     private final Random random;
 
@@ -251,6 +252,7 @@ public class Test extends GamePanel {
         this.puzzleSize = size;
         this.type = type;
         this.seed = seed;
+        this.image = image;
         
         random = new Random(seed);
 
@@ -286,9 +288,8 @@ public class Test extends GamePanel {
                 output.writeInt(type);
                 output.writeLong(seed);
                 output.writeObject(puzzleSize);
-                encodeImage(getImage(), output);
-                encodeImage(getBackgroundImage(), output);
-                // TODO chains
+                encodeImage(image, output);
+                save(output);
             } catch (Exception ex) {
                 ex.printStackTrace();
                 error(ex.getClass().getSimpleName(), "Exception saving to", file.getAbsolutePath());
@@ -296,6 +297,41 @@ public class Test extends GamePanel {
         }
     }
 
+    private void save(ObjectOutputStream output) throws IOException {
+        encodeImage(getBackgroundImage(), output);
+        List<Piece> pieces = getPieces();
+        output.writeInt(pieces.size());
+        for (Piece piece : pieces) {
+            output.writeInt(piece.getX());
+            output.writeInt(piece.getY());
+            output.writeObject(piece.getDir());
+            output.writeInt(getComponentZOrder(piece));
+        }
+    }
+    
+    private void load(ObjectInputStream input) throws IOException {
+        setBackgroundImage(decodeImage(input));
+        List<Piece> pieces = getPieces();
+        int count = input.readInt();
+        if (count != pieces.size())
+            throw new IOException("wrong number of pieces");
+        for (Piece piece : pieces) {
+            int x = input.readInt();
+            int y = input.readInt();
+            Direction dir;
+            try {
+                dir = (Direction) input.readObject();
+            } catch (ClassNotFoundException ex) {
+                throw new IOException("reading piece " + piece, ex);
+            }
+            int z = input.readInt();
+            piece.setLocation(x, y);
+            piece.setDir(dir);
+            setComponentZOrder(piece, z);
+        }
+        repaint();
+    }
+    
     @Override
     protected JPopupMenu createPopup() {
         JPopupMenu popup = super.createPopup();

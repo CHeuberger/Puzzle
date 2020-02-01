@@ -56,6 +56,10 @@ public abstract class Piece extends JComponent
         addMouseMotionListener(this);
     }
     
+    void setDir(Direction dir) {
+        this.dir = dir;
+    }
+    
     public Direction getDir() {
         return dir;
     }

@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,6 +111,10 @@ public class GamePanel extends JPanel implements GameListener {
     
     protected BufferedImage getBackgroundImage() {
         return background;
+    }
+    
+    protected List<Piece> getPieces() {
+        return Collections.unmodifiableList(pieces);
     }
 
     protected JPopupMenu createPopup() {
