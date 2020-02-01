@@ -1,7 +1,7 @@
 package cfh.puzzle;
 
 public class Template50 extends Template {
-    
+
     @Override public int getSizeX() { return 50; }
     @Override public int getSizeY() { return getSizeX(); }
 

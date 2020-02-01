@@ -1,20 +1,24 @@
 package cfh.puzzle;
 
+import static javax.swing.JOptionPane.*;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +32,6 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
@@ -39,14 +42,9 @@ public class GamePanel extends JPanel implements GameListener {
 
     static final int DELTA_SNAP = 8;
 
-    private final String CMD_HOME = "Home";
-    private final String CMD_ARRANGE = "Arrange";
-    private final String CMD_BACKGROUND = "Background";
-    private final String CMD_SHOW = "Show";
-    private final String CMD_DEBUG = "Debug";
-
-    private Image image = null;
-    private Image background = null;
+    private BufferedImage image = null;
+    private BufferedImage background = null;
+    
     private final int sizeX;
     private final int sizeY;
 
@@ -57,6 +55,7 @@ public class GamePanel extends JPanel implements GameListener {
     private final List<Piece> pieces = new ArrayList<>();
     
     private final Map<Integer, Point> bookmarks = new HashMap<>();
+    private static final Integer KEY_HISTORY = KeyEvent.VK_SPACE; 
     
 
     public GamePanel(int sx, int sy) {
@@ -77,10 +76,11 @@ public class GamePanel extends JPanel implements GameListener {
                 boolean ctrl = (ev.getModifiersEx() & ev.CTRL_DOWN_MASK) != 0;
                 if ((ev.VK_0 <= ch && ch <= ev.VK_9) 
                         || (ev.VK_A <= ch && ch <= ev.VK_Z)
-                        || ch == ev.VK_SPACE) {
+                        || ch == KEY_HISTORY) {
                     Point actual = getLocation();
-                    if (ctrl && ch != ev.VK_SPACE) {
+                    if (ctrl && ch != KEY_HISTORY) {
                         bookmarks.put(ch, actual);
+                        Toolkit.getDefaultToolkit().beep();
                     } else {
                         Point p = bookmarks.get(ch);
                         if (p != null) {
@@ -95,38 +95,35 @@ public class GamePanel extends JPanel implements GameListener {
         setFocusable(true);
     }
     
-    protected void setImage(Image img) {
+    protected void setImage(BufferedImage img) {
         image = img;
         showMenuItem.setEnabled(image != null);
     }
 
     private JPopupMenu createPopup() {
-        MenuListener menuListener = new MenuListener();
-        
         JMenuItem home = new JMenuItem("Home");
-        home.setActionCommand(CMD_HOME);
-        home.addActionListener(menuListener);
+        home.addActionListener(this::doHome);
         
         JMenuItem arrange = new JMenuItem("Arrange");
-        arrange.setActionCommand(CMD_ARRANGE);
-        arrange.addActionListener(menuListener);
+        arrange.addActionListener(this::doArrange);
+        
+        JMenuItem save = new JMenuItem("Save");
+        save.addActionListener(this::doSave);
         
         showMenuItem = new JMenuItem("Show");
-        showMenuItem.setActionCommand(CMD_SHOW);
-        showMenuItem.addActionListener(menuListener);
+        showMenuItem.addActionListener(this::doShow);
         showMenuItem.setEnabled(image != null);
         
         JMenuItem bg = new JMenuItem("Background");
-        bg.setActionCommand(CMD_BACKGROUND);
-        bg.addActionListener(menuListener);
+        bg.addActionListener(this::doBackground);
         
         JMenuItem debug = new JMenuItem("Debug");
-        debug.setActionCommand(CMD_DEBUG);
-        debug.addActionListener(menuListener);
+        debug.addActionListener(this::doDebug);
         
         JPopupMenu menu = new JPopupMenu();
         menu.add(home);
         menu.add(showMenuItem);
+        menu.add(save);
         menu.addSeparator();
         menu.add(bg);
         menu.addSeparator();
@@ -246,39 +243,77 @@ public class GamePanel extends JPanel implements GameListener {
         gg.fillRect(0, h-2, w, 2);
     }
     
-    private void doHome() {
+    private void doHome(ActionEvent ev) {
+        Point location = getLocation();
+        if (location.x != 0 || location.y != 0) {
+            bookmarks.put(KEY_HISTORY, location);
+        }
         setLocation(0, 0);
     }
     
-    private void doArrange() {
-        int w = getParent().getWidth();
-        int h = getParent().getHeight();
-        int i = 0;
-        int j = 0;
-        int x0 = 15 - getX();
-        int y0 = 15 - getY();
-        for (Piece piece : pieces) {
-            if (!piece.getConnected().isEmpty())
-                continue;
+    private void doArrange(ActionEvent ev) {
+        if (isCtrl(ev)) {
+            int w = getParent().getWidth();
+            int h = getParent().getHeight();
+            int i = 0;
+            int j = 0;
+            int x0 = 15 - getX();
+            int y0 = 15 - getY();
+            for (Piece piece : pieces) {
+                if (!piece.getConnected().isEmpty())
+                    continue;
 
-            int x = x0 + i*(sizeX+20) + 5*(j%2);
-            int y = y0 + j*(sizeY+20) + 5*(i%2);
-            piece.setLocation(x, y);
+                int x = x0 + i*(sizeX+20) + 5*(j%2);
+                int y = y0 + j*(sizeY+20) + 5*(i%2);
+                piece.setLocation(x, y);
 
-            j += 1;
-            if (y + sizeY + piece.getHeight() > h - getY()) {
-                j = 0;
-                i += 1;
-                if (x + sizeX + piece.getWidth() > w - getX()) {
-                    x0 += 10;
-                    y0 += 10;
-                    i = 0;
+                j += 1;
+                if (y + sizeY + piece.getHeight() > h - getY()) {
+                    j = 0;
+                    i += 1;
+                    if (x + sizeX + piece.getWidth() > w - getX()) {
+                        x0 += 16;
+                        y0 += 16;
+                        i = 0;
+                    }
+                }
+            }
+        } else {
+            int w = getParent().getWidth();
+            int h = getParent().getHeight();
+            int x = - getX();
+            int y = - getY();
+            int delta = 0;
+            synchronized (getTreeLock()) {
+                for (int i = 0; i < getComponentCount(); i++) {
+                    Component comp = getComponent(i);
+                    if (comp instanceof Piece) {
+                        Piece piece = (Piece) comp;
+                        if (!piece.getConnected().isEmpty())
+                            continue;
+                        
+                        int pw = (piece.getWidth() + sizeX) / 2;
+                        int ph = (piece.getHeight() + sizeY) / 2; 
+                        if (x + pw > w - getX()) {
+                            x = - getX() + delta;
+                            y += ph;
+                            if (y + ph > h - getY()) {
+                                delta += 16;
+                                x += 16;
+                                y = - getY() + delta;
+                            }
+                        }
+                        piece.setLocation(x, y);
+                        x += pw;
+                    } else {
+                        continue;
+                    }
                 }
             }
         }
     }
     
-    protected void doShow() {
+    protected void doShow(ActionEvent ev) {
         if (image != null) {
             if (preview == null) {
                 ImageIcon icon = new ImageIcon(image);
@@ -298,18 +333,34 @@ public class GamePanel extends JPanel implements GameListener {
         }
     }
     
-    private void doBackground() {
+    private void doSave(ActionEvent ev) {
+        FileChooser chooser = new FileChooser();
+        if (chooser.showSaveDialog(getParent()) == JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            Object[] msg = { "File already exists!", file.getAbsolutePath(), "Overwrite?" };
+            if (file.exists() && showConfirmDialog(getParent(), msg, "Confirm", OK_CANCEL_OPTION) != OK_OPTION)
+                return;
+            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(file))) {
+                output.writeObject(this);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                error(ex.getClass().getSimpleName(), "Exception saving to", file.getAbsolutePath());
+            }
+        }
+    }
+
+    private void doBackground(ActionEvent ev) {
         FileChooser chooser = new FileChooser();
         if (chooser.showOpenDialog(getParent()) == JFileChooser.APPROVE_OPTION) {
             File file = chooser.getSelectedFile();
             if (file.isFile()) {
                 try {
-                    Image img = ImageIO.read(file);
+                    BufferedImage img = ImageIO.read(file);
                     background = img;
                     repaint();
                 } catch (IOException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(getParent(), ex, "Error", JOptionPane.ERROR_MESSAGE);
+                    error(ex.getClass().getSimpleName(), "Exception reading background from", file.getAbsolutePath());
                 }
             } else {
                 switch (file.getName()) {
@@ -332,15 +383,14 @@ public class GamePanel extends JPanel implements GameListener {
                         }
                         break;
                     default:
-                        Object[] message = { "not a file", file };
-                        JOptionPane.showMessageDialog(getParent(), message, "Error", JOptionPane.ERROR_MESSAGE);
+                        error("Error", "not a file", file);
                         break;
                 }
             }
         }
     }
     
-    private void doDebug() {
+    private void doDebug(ActionEvent ev) {
         System.out.println();
         for (Piece piece : pieces) {
             if (piece.getConnected().isEmpty())
@@ -353,37 +403,20 @@ public class GamePanel extends JPanel implements GameListener {
         }
     }
     
-    private void doArrange2() {
-        int w = getParent().getWidth();
-        int h = getParent().getHeight();
-        int x = - getX();
-        int y = - getY();
-        int delta = 0;
-        synchronized (getTreeLock()) {
-            for (int i = 0; i < getComponentCount(); i++) {
-                Component comp = getComponent(i);
-                if (comp instanceof Piece) {
-                    Piece piece = (Piece) comp;
-                    if (!piece.getConnected().isEmpty())
-                        continue;
-                    
-                    int pw = (piece.getWidth() + sizeX) / 2;
-                    int ph = (piece.getHeight() + sizeY) / 2; 
-                    if (x + pw > w - getX()) {
-                        x = - getX() + delta;
-                        y += ph;
-                        if (y + ph > h - getY()) {
-                            delta += 10;
-                            x += 10;
-                            y = - getY() + delta;
-                        }
-                    }
-                    piece.setLocation(x, y);
-                    x += pw;
-                } else {
-                    continue;
-                }
-            }
+    private void error(String title, Object... msg) {
+        showMessageDialog(getParent(), msg, title, ERROR_MESSAGE);
+    }
+    
+    private static boolean isCtrl(ActionEvent ev) {
+        return (ev.getModifiers() & ev.CTRL_MASK) != 0;
+    }
+    
+    private static byte[] encodeImage(BufferedImage image) throws IOException {
+        if (image == null)
+            return new byte[0];
+        try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
+            ImageIO.write(image, "PNG", result);
+            return result.toByteArray();
         }
     }
     
@@ -426,39 +459,6 @@ public class GamePanel extends JPanel implements GameListener {
                 gameY = 0;
             }
             setLocation(gameX, gameY);
-        }
-    }
-    
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    private class MenuListener implements ActionListener {
-        
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-            String cmd = ev.getActionCommand();
-            switch (cmd) {
-                case CMD_HOME:
-                    doHome();
-                    break;
-                case CMD_ARRANGE:
-                    if ((ev.getModifiers() & ev.CTRL_MASK) != 0) {
-                        doArrange();
-                    } else {
-                        doArrange2();
-                    }
-                    break;
-                case CMD_BACKGROUND:
-                    doBackground();
-                    break;
-                case CMD_SHOW:
-                    doShow();
-                    break;
-                case CMD_DEBUG:
-                    doDebug();
-                    break;
-                default:
-                	throw new AssertionError("invalic command \"" + cmd + "\"");
-            }
         }
     }
 }

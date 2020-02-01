@@ -34,8 +34,8 @@ public class Test extends GamePanel {
 
     private static final String VERSION = "Puzzle by Carlos Heuberger - test v1.1";
     
-    private static final int MAXX = 2900;
-    private static final int MAXY = 1800;
+    private static final int MAXX = 5000;
+    private static final int MAXY = 2048;
 
     private static final Color[] COLORS = new Color[] {
         Color.RED,
@@ -207,13 +207,13 @@ public class Test extends GamePanel {
 		return seed;
 	}
 
+
     private final Size puzzleSize;
     private final int type;
 
     private final Random random;
 
     private JFrame frame;
-    private List<Piece> pieces;
 
     private Test(int t, BufferedImage image, Size size, long seed, String title) {
         super(size.getSizeX(), size.getSizeY());
@@ -227,11 +227,9 @@ public class Test extends GamePanel {
         setOpaque(false);
         setSize(MAXX, MAXY);
 
-        pieces = createPieces(image);
-        for (Piece piece : pieces) {
+        for (Piece piece : createPieces(image)) {
             add(piece);
         }
-
 
         frame = new JFrame(VERSION + "- " + title);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -245,7 +243,7 @@ public class Test extends GamePanel {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                doShow();
+                doShow(null);
             }
         });
     }

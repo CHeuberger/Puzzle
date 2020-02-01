@@ -1,8 +1,9 @@
 package cfh.puzzle;
 
+
 public abstract class Template {
 
-	public static Template get(String name) {
+    public static Template get(String name) {
 		switch (name) {
 			case "50": return new Template50(); 
 			case "55": return new Template55(); 
