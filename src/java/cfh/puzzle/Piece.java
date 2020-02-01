@@ -9,6 +9,8 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -18,7 +20,7 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 public abstract class Piece extends JComponent
-                            implements MouseListener, MouseMotionListener {
+                            implements MouseListener, MouseMotionListener, MouseWheelListener {
 
     private final int tileX;
     private final int tileY;
@@ -55,6 +57,7 @@ public abstract class Piece extends JComponent
         
         addMouseListener(this);
         addMouseMotionListener(this);
+        addMouseWheelListener(this);
     }
     
     void setDir(Direction dir) {
@@ -203,18 +206,23 @@ public abstract class Piece extends JComponent
     public void mouseClicked(MouseEvent ev) {
         switch (ev.getButton()) {
             case BUTTON1: {
-                if (ev.getClickCount() == 2) {
-                    boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
-                    rotate(shift);
-                } else if ((ev.getModifiersEx() & CTRL_DOWN_MASK) != 0) {
-                    synchronized (this) {
-                        for (GameListener listener : listeners) {
-                            listener.pieceDisconnect(this);
+                switch (ev.getClickCount()) {
+                    case 1:
+                        if ((ev.getModifiersEx() & CTRL_DOWN_MASK) != 0) {
+                            synchronized (this) {
+                                for (GameListener listener : listeners) {
+                                    listener.pieceDisconnect(this);
+                                }
+                            }
+                        } else if ((ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0) {
+                            selected = !selected;
+                            repaint();
                         }
-                    }
-                } else if ((ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0) {
-                    selected = !selected;
-                    repaint();
+                        break;
+                    case 2:
+                        boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
+                        rotate(shift);
+                        break;
                 }
                 break;
             }
@@ -224,8 +232,14 @@ public abstract class Piece extends JComponent
                 break;
             }
             case BUTTON3: {
-                boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
-                rotate(!shift);
+                switch (ev.getClickCount()) {
+                    case 1:
+                        break;
+                    case 2:
+                        boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
+                        rotate(!shift);
+                        break;
+                }
                 break;
             }
         }
@@ -287,6 +301,11 @@ public abstract class Piece extends JComponent
     
     @Override
     public void mouseMoved(MouseEvent ev) {
+    }
+    
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent ev) {
+        rotate(ev.getWheelRotation() > 0);
     }
     
     @Override

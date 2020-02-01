@@ -9,6 +9,8 @@ import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
@@ -267,7 +269,15 @@ public class Test extends GamePanel {
         setSize(MAXX, MAXY);
         
         frame = new JFrame(VERSION + " - " + title);
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent ev) {
+                if (showConfirmDialog(frame, "Close ?", "Confirm", YES_NO_OPTION) == YES_OPTION) {
+                    frame.dispose();
+                }
+            }
+        });
         frame.setLayout(null);
         frame.add(this);
         frame.setSize(1024, 800);
