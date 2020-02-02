@@ -295,6 +295,13 @@ public class Test extends GamePanel {
             Object[] msg = { "File already exists!", file.getAbsolutePath(), "Overwrite?" };
             if (file.exists() && showConfirmDialog(getParent(), msg, "Confirm", OK_CANCEL_OPTION) != OK_OPTION)
                 return;
+            if (file.exists()) {
+                File bak = new File(file.getParentFile(), file.getName() + ".bak");
+                if (bak.exists()) {
+                    bak.delete();
+                }
+                file.renameTo(bak);
+            }
             try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(file))) {
                 output.writeInt(MAGIC);
                 output.writeInt(type);
