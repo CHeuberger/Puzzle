@@ -1,5 +1,7 @@
 package cfh.puzzle;
 
+import static java.util.Collections.*;
+import static java.util.stream.Collectors.*;
 import static javax.swing.JOptionPane.*;
 
 import java.awt.Color;
@@ -18,7 +20,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,9 +56,12 @@ public class GamePanel extends JPanel implements GameListener {
     
     private final List<Piece> pieces = new ArrayList<>();
     
-    private final Map<Integer, Point> bookmarks = new HashMap<>();
     private static final Integer KEY_HISTORY = KeyEvent.VK_SPACE; 
-    
+    private final Map<Integer, Point> bookmarks = new HashMap<>();
+
+    private static final int KEY_NO_GROUP = KeyEvent.VK_SPACE;
+    private int actualGroup = KEY_NO_GROUP;
+    private final Map<Integer, List<Piece>> groups = new HashMap<>();
 
     public GamePanel(String title, int sx, int sy) {
         if (sx < 1) throw new IllegalArgumentException("negative sx: " + sx);
@@ -76,20 +80,34 @@ public class GamePanel extends JPanel implements GameListener {
             public void keyPressed(KeyEvent ev) {
                 int ch = ev.getExtendedKeyCode();
                 boolean ctrl = (ev.getModifiersEx() & ev.CTRL_DOWN_MASK) != 0;
-                if ((ev.VK_0 <= ch && ch <= ev.VK_9) 
-                        || (ev.VK_A <= ch && ch <= ev.VK_Z)
-                        || ch == KEY_HISTORY) {
-                    Point actual = getLocation();
-                    if (ctrl && ch != KEY_HISTORY) {
-                        putBookmark(ch, actual);
-                        Toolkit.getDefaultToolkit().beep();
-                    } else {
-                        Point p = bookmarks.get(ch);
-                        if (p != null) {
-                            putBookmark(KEY_HISTORY, actual);
-                            setLocation(p);
-                            repaint();
-                        }
+                boolean shift = (ev.getModifiersEx() & ev.SHIFT_DOWN_MASK) != 0;
+                boolean mark = (ev.VK_0 <= ch && ch <= ev.VK_9) || (ev.VK_A <= ch && ch <= ev.VK_Z);
+                Point actual = getLocation();
+                
+                if (shift && ctrl && mark) {
+                    actualGroup = ch;
+                    groups.put(ch, pieces.stream().filter(Piece::isSelected).collect(toList()));
+                    repaint();
+                    Toolkit.getDefaultToolkit().beep();
+                }
+                if (shift && (mark || ch == KEY_NO_GROUP)) {
+                    if (actualGroup != KEY_NO_GROUP) {
+                        groups.put(actualGroup, pieces.stream().filter(Piece::isSelected).collect(toList()));
+                    }
+                    actualGroup = ch;
+                    pieces.stream().forEach(Piece::unselect);
+                    groups.getOrDefault(ch, emptyList()).stream().forEach(Piece::select);
+                    repaint();
+                    Toolkit.getDefaultToolkit().beep();
+                } else if (ctrl && mark) {
+                    putBookmark(ch, actual);
+                    Toolkit.getDefaultToolkit().beep();
+                } else if (!shift && !ctrl && (mark || ch == KEY_HISTORY)) {
+                    Point p = bookmarks.get(ch);
+                    if (p != null) {
+                        putBookmark(KEY_HISTORY, actual);
+                        setLocation(p);
+                        repaint();
                     }
                 }
             }
@@ -116,11 +134,11 @@ public class GamePanel extends JPanel implements GameListener {
     }
     
     protected List<Piece> getPieces() {
-        return Collections.unmodifiableList(pieces);
+        return unmodifiableList(pieces);
     }
     
     protected Map<Integer, Point> getBookmarks() {
-        return Collections.unmodifiableMap(bookmarks);
+        return unmodifiableMap(bookmarks);
     }
     
     protected void putBookmark(Integer key, Point point) {
@@ -275,6 +293,7 @@ public class GamePanel extends JPanel implements GameListener {
     }
     
     private void doArrange(ActionEvent ev) {
+        boolean all = pieces.stream().noneMatch(Piece::isSelected);
         if (isCtrl(ev)) {
             int w = getParent().getWidth();
             int h = getParent().getHeight();
@@ -284,6 +303,8 @@ public class GamePanel extends JPanel implements GameListener {
             int y0 = 15 - getY();
             for (Piece piece : pieces) {
                 if (!piece.getConnected().isEmpty())
+                    continue;
+                if (!all && !piece.isSelected())
                     continue;
 
                 int x = x0 + i*(sizeX+20) + 5*(j%2);
@@ -314,7 +335,9 @@ public class GamePanel extends JPanel implements GameListener {
                         Piece piece = (Piece) comp;
                         if (!piece.getConnected().isEmpty())
                             continue;
-                        
+                        if (!all && !piece.isSelected())
+                            continue;
+      
                         int pw = (piece.getWidth() + sizeX) / 2;
                         int ph = (piece.getHeight() + sizeY) / 2; 
                         if (x + pw > w - getX()) {
@@ -434,15 +457,14 @@ public class GamePanel extends JPanel implements GameListener {
                 pressedX = ev.getX();
                 pressedY = ev.getY();
             } else if (SwingUtilities.isMiddleMouseButton(ev)) {
-                System.out.println(ev);
                 if (detail == null) {
                     detail = new JWindow(getRootFrame());
                     BufferedImage img = new BufferedImage(800, 600, BufferedImage.TYPE_INT_ARGB);
                     Graphics2D gg = img.createGraphics();
                     try {
                         Point p = getLocationOnScreen();
-                        gg.scale(4, 4);
-                        gg.translate(p.getX() - ev.getXOnScreen() + img.getWidth()/8, p.getY() - ev.getYOnScreen() + img.getHeight()/8);
+                        gg.scale(3, 3);
+                        gg.translate(p.getX() - ev.getXOnScreen() + img.getWidth()/6, p.getY() - ev.getYOnScreen() + img.getHeight()/6);
                         paint(gg);
                     } finally {
                         gg.dispose();

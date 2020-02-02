@@ -425,7 +425,7 @@ public class Test extends GamePanel {
                     gg.fill3DRect(0, 0, width, height, true);
                     if (BORDER >= 3) {
                         gg.fill3DRect(1, 1, width-2, height-2, true);
-                        if (BORDER >= 6) {
+                        if (BORDER >= 5) {
                             gg.fill3DRect(2, 2, width-4, height-4, true);
                         }
                     }

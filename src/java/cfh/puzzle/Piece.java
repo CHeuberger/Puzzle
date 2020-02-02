@@ -151,10 +151,16 @@ public abstract class Piece extends JComponent
         return done;
     }
     
+    public void unselect( ) {
+        selected = false;
+    }
+    
+    public void select() {
+        selected = true;
+    }
     public boolean isSelected() {
         return selected;
     }
-    
 
     public synchronized void addGameListener(GameListener l) {
         if (l != null) {
@@ -227,9 +233,6 @@ public abstract class Piece extends JComponent
                     rotate(shift);
                     break;
             }
-        } else if (SwingUtilities.isMiddleMouseButton(ev)) {
-//            boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
-//            rotate(shift);
         } else if (SwingUtilities.isRightMouseButton(ev)) {
             switch (ev.getClickCount()) {
                 case 1:
