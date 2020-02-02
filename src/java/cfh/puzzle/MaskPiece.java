@@ -162,7 +162,7 @@ public class MaskPiece extends Piece {
             gg.drawImage(img, 0, 0, this);
         }
         if (isSelected()) {
-            gg.setColor(Color.GREEN.darker());
+            gg.setColor(new Color(0, 200, 0, 200));
             gg.fillOval(getWidth()/5, getHeight()/5, getWidth()/3, getHeight()/3);
         }
     }

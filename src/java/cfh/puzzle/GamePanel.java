@@ -7,6 +7,8 @@ import static javax.swing.JOptionPane.*;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -282,6 +284,16 @@ public class GamePanel extends JPanel implements GameListener {
         gg.fillRect(0, 0, w, 2);
         gg.fillRect(w-2, 0, 2, h);
         gg.fillRect(0, h-2, w, 2);
+
+        String info = String.format("%c: %4d selected", (char) actualGroup, pieces.stream().filter(Piece::isSelected).count());
+        gg.setFont(new Font("monospaced", Font.BOLD, 16));
+        FontMetrics fm = gg.getFontMetrics();
+        int tw = fm.stringWidth(info);
+        int th = fm.getHeight();
+        gg.setColor(new Color(0, 200, 0, 100));
+        gg.fillRect(-getX(), -getY(), 4+tw+4, th);
+        gg.setColor(new Color(0, 0, 0, 255));
+        gg.drawString(info, 4-getX(), fm.getAscent()+fm.getLeading()-getY());
     }
     
     private void doHome(ActionEvent ev) {

@@ -225,7 +225,7 @@ public abstract class Piece extends JComponent
                         }
                     } else if ((ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0) {
                         selected = !selected;
-                        repaint();
+                        getParent().repaint();
                     }
                     break;
                 case 2:
