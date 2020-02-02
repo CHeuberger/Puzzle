@@ -179,68 +179,65 @@ public abstract class Piece extends JComponent
 
     @Override
     public void mousePressed(MouseEvent ev) {
-        if (ev.getButton() == BUTTON1) {
+        if (SwingUtilities.isLeftMouseButton(ev)) {
             pressedX = ev.getX();
             pressedY = ev.getY();
-        }
-        synchronized (this) {
-            for (GameListener listener : listeners) {
-                listener.pieceSelected(this);
+            synchronized (this) {
+                for (GameListener listener : listeners) {
+                    listener.pieceSelected(this);
+                }
             }
+        } else if (SwingUtilities.isMiddleMouseButton(ev)) {
+            getParent().dispatchEvent(ev);
         }
     }
 
     @Override
     public void mouseReleased(MouseEvent ev) {
-        if (ev.getButton() == BUTTON1) {
+        if (SwingUtilities.isLeftMouseButton(ev)) {
             synchronized (this) {
                 for (GameListener listener : listeners) {
                     listener.pieceMoved(this, getX(), getY());
                 }
             }
+        } else if (SwingUtilities.isMiddleMouseButton(ev)) {
+            getParent().dispatchEvent(ev);
         }
     }
 
     @Override
     @SuppressWarnings("incomplete-switch")
     public void mouseClicked(MouseEvent ev) {
-        switch (ev.getButton()) {
-            case BUTTON1: {
-                switch (ev.getClickCount()) {
-                    case 1:
-                        if ((ev.getModifiersEx() & CTRL_DOWN_MASK) != 0) {
-                            synchronized (this) {
-                                for (GameListener listener : listeners) {
-                                    listener.pieceDisconnect(this);
-                                }
+        if (SwingUtilities.isLeftMouseButton(ev)) {
+            switch (ev.getClickCount()) {
+                case 1:
+                    if ((ev.getModifiersEx() & CTRL_DOWN_MASK) != 0) {
+                        synchronized (this) {
+                            for (GameListener listener : listeners) {
+                                listener.pieceDisconnect(this);
                             }
-                        } else if ((ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0) {
-                            selected = !selected;
-                            repaint();
                         }
-                        break;
-                    case 2:
-                        boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
-                        rotate(shift);
-                        break;
-                }
-                break;
+                    } else if ((ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0) {
+                        selected = !selected;
+                        repaint();
+                    }
+                    break;
+                case 2:
+                    boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
+                    rotate(shift);
+                    break;
             }
-            case BUTTON2: {
-                boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
-                rotate(shift);
-                break;
-            }
-            case BUTTON3: {
-                switch (ev.getClickCount()) {
-                    case 1:
-                        break;
-                    case 2:
-                        boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
-                        rotate(!shift);
-                        break;
-                }
-                break;
+        } else if (SwingUtilities.isMiddleMouseButton(ev)) {
+//            boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
+//            rotate(shift);
+        } else if (SwingUtilities.isRightMouseButton(ev)) {
+            switch (ev.getClickCount()) {
+                case 1:
+                    break;
+                case 2:
+                    boolean shift = (ev.getModifiersEx() & SHIFT_DOWN_MASK) != 0;
+                    rotate(!shift);
+                    break;
             }
         }
     }

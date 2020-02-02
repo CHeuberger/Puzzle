@@ -1,6 +1,7 @@
 package cfh.puzzle;
 
 import static javax.swing.JOptionPane.*;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -32,6 +33,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
 
 import cfh.FileChooser;
@@ -423,36 +425,66 @@ public class GamePanel extends JPanel implements GameListener {
 
         private int pressedX;
         private int pressedY;
+        
+        private JWindow detail = null;
 
         @Override
         public void mousePressed(MouseEvent ev) {
-            if (!SwingUtilities.isLeftMouseButton(ev)) {
-                return;
+            if (SwingUtilities.isLeftMouseButton(ev)) {
+                pressedX = ev.getX();
+                pressedY = ev.getY();
+            } else if (SwingUtilities.isMiddleMouseButton(ev)) {
+                System.out.println(ev);
+                if (detail == null) {
+                    detail = new JWindow(getRootFrame());
+                    BufferedImage img = new BufferedImage(800, 600, BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D gg = img.createGraphics();
+                    try {
+                        Point p = getLocationOnScreen();
+                        gg.scale(4, 4);
+                        gg.translate(p.getX() - ev.getXOnScreen() + img.getWidth()/8, p.getY() - ev.getYOnScreen() + img.getHeight()/8);
+                        paint(gg);
+                    } finally {
+                        gg.dispose();
+                    }
+                    JLabel lbl = new JLabel(new ImageIcon(img));
+                    detail.add(lbl);
+                    detail.pack();
+                    detail.setLocation(ev.getXOnScreen()-img.getWidth()/2, ev.getYOnScreen()-img.getHeight()/2);
+                    detail.setVisible(true);
+                }
             }
-            pressedX = ev.getX();
-            pressedY = ev.getY();
+        }
+        
+        @Override
+        public void mouseReleased(MouseEvent ev) {
+            if (SwingUtilities.isMiddleMouseButton(ev)) {
+                if (detail != null) {
+                    detail.dispose();
+                    detail = null;
+                }
+            }
         }
 
         @Override
         public void mouseDragged(MouseEvent ev) {
-            if (!SwingUtilities.isLeftMouseButton(ev)) {
-                return;
+            if (SwingUtilities.isLeftMouseButton(ev)) {
+                gameX += ev.getX() - pressedX;
+                gameY += ev.getY() - pressedY;
+                if (gameX < getParent().getWidth() - getWidth()) {
+                    gameX = getParent().getWidth() - getWidth();
+                }
+                if (gameX > 0) {
+                    gameX = 0;
+                }
+                if (gameY < getParent().getHeight() - getHeight()) {
+                    gameY = getParent().getHeight() - getHeight();
+                }
+                if (gameY > 0) {
+                    gameY = 0;
+                }
+                setLocation(gameX, gameY);
             }
-            gameX += ev.getX() - pressedX;
-            gameY += ev.getY() - pressedY;
-            if (gameX < getParent().getWidth() - getWidth()) {
-                gameX = getParent().getWidth() - getWidth();
-            }
-            if (gameX > 0) {
-                gameX = 0;
-            }
-            if (gameY < getParent().getHeight() - getHeight()) {
-                gameY = getParent().getHeight() - getHeight();
-            }
-            if (gameY > 0) {
-                gameY = 0;
-            }
-            setLocation(gameX, gameY);
         }
     }
 }
