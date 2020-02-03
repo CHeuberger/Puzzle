@@ -220,6 +220,7 @@ public class GamePanel extends JPanel implements GameListener {
                 p.setLocation(p.getX()+dx, p.getY()+dy);
             }
             piece.connect(next);
+            Toolkit.getDefaultToolkit().beep();
         }
     }
 
