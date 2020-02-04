@@ -47,7 +47,7 @@ public class Test extends GamePanel {
     private static final String VERSION = "Puzzle by Carlos Heuberger - test v1.2";
     
     private static final int MAXX = 5000;
-    private static final int MAXY = 2048;
+    private static final int MAXY = 4000;
 
     private static final Color[] COLORS = new Color[] {
         Color.RED,

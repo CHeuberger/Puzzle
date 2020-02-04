@@ -7,10 +7,12 @@ import static javax.swing.JOptionPane.*;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -36,6 +38,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
 
@@ -375,12 +378,22 @@ public class GamePanel extends JPanel implements GameListener {
     protected void doShow(ActionEvent ev) {
         if (image != null) {
             if (preview == null) {
-                ImageIcon icon = new ImageIcon(image);
+                Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+                ImageIcon icon;
+                if (image.getWidth() > screen.width-20 || image.getHeight() > screen.height-100) {
+                    double w = (double) image.getWidth() / (screen.width-20);
+                    double h = (double) image.getHeight() / (screen.height-100);
+                    double scale = Math.max(w, h);
+                    System.out.println(scale);
+                    icon = new ImageIcon(image.getScaledInstance((int)(image.getWidth()/scale), (int)(image.getHeight()/scale), Image.SCALE_SMOOTH));
+                } else {
+                    icon = new ImageIcon(image);
+                }
                 JLabel msg = new JLabel(icon);
                 preview = new JDialog(SwingUtilities.windowForComponent(this));
                 preview.setTitle("Preview - " + title);
                 preview.setModal(false);
-                preview.add(msg);
+                preview.add(new JScrollPane(msg));
                 msg.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mousePressed(MouseEvent ev) {
