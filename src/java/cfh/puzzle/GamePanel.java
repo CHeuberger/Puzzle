@@ -309,7 +309,7 @@ public class GamePanel extends JPanel implements GameListener {
     }
     
     private void doArrange(ActionEvent ev) {
-        boolean all = pieces.stream().noneMatch(Piece::isSelected);
+        boolean all = actualGroup == KEY_NO_GROUP && pieces.stream().noneMatch(Piece::isSelected);
         if (isCtrl(ev)) {
             int w = getParent().getWidth();
             int h = getParent().getHeight();
@@ -354,8 +354,8 @@ public class GamePanel extends JPanel implements GameListener {
                         if (!all && !piece.isSelected())
                             continue;
       
-                        int pw = (piece.getWidth() + sizeX) / 2;
-                        int ph = (piece.getHeight() + sizeY) / 2; 
+                        int pw = (piece.getWidth() + sizeX) / 2 + 2;
+                        int ph = (piece.getHeight() + sizeY) / 2 + 2; 
                         if (x + pw > w - getX()) {
                             x = - getX() + delta;
                             y += ph;
