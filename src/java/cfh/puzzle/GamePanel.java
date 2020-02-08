@@ -168,10 +168,9 @@ public class GamePanel extends JPanel implements GameListener {
         debug.addActionListener(this::doDebug);
         
         JPopupMenu menu = new JPopupMenu();
-        menu.add(home);
         menu.add(showMenuItem);
-        menu.addSeparator();
         menu.add(bg);
+        menu.add(home);
         menu.addSeparator();
         menu.add(arrange);
         menu.addSeparator();
