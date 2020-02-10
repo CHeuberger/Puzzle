@@ -1,8 +1,6 @@
 package cfh.test;
 
-import static java.awt.event.InputEvent.ALT_DOWN_MASK;
-import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
-import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+import static java.awt.event.InputEvent.*;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -20,7 +18,9 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.CompoundBorder;
 
@@ -82,14 +82,15 @@ public class FullPanel extends JPanel {
         private final List<MenuItem> items;
         
         private boolean showMenu = false;
+        private MenuItem highlight = null;
 
         FullMenu(JComponent parent) {
             this.parent = parent;
             
-            int w = 0;
             items = Collections.unmodifiableList(Arrays.asList(
-                    new MenuItem("Test1",   0, 100),
-                    new MenuItem("Test2", 100, 100)
+                    new MenuItem("Test1",   0, 100, this::test),
+                    new MenuItem("Test2", 100, 100, this::test),
+                    new MenuItem("QUIT", -100, 100, this::doQuit)
                     ));
             
             parent.addMouseListener(new MouseAdapter() {
@@ -107,40 +108,76 @@ public class FullPanel extends JPanel {
                 public void mouseMoved(MouseEvent ev) {
                     doMouseMoved(ev);
                 }
+                @Override
+                public void mouseDragged(MouseEvent ev) {
+                    doMouseDragged(ev);
+                }
             });
         }
         
+        private void test() {
+            JOptionPane.showMessageDialog(null, "test");
+        }
+        
+        private void doQuit() {
+            // TODO confirm
+            SwingUtilities.windowForComponent(parent).dispose();
+        }
         
         private void doMousePressed(MouseEvent ev) {
-            if (showMenu) {
+            if (showMenu && SwingUtilities.isLeftMouseButton(ev)) {
+                highlight = items.stream().filter(i -> i.contains(ev, parent.getWidth())).findFirst().orElse(null);
+                parent.repaint();
             }
         }
         
         private void doMouseReleased(MouseEvent ev) {
-            if (showMenu) {
+            if (showMenu && SwingUtilities.isLeftMouseButton(ev)) {
+                if (highlight != null) {
+                    highlight.action.run();
+                }
+                // TODO
+                highlight = null;
+                parent.repaint();
             }
         }
         
         private void doMouseMoved(MouseEvent ev) {
-            if ((ev.getModifiersEx() & (ALT_DOWN_MASK | CTRL_DOWN_MASK | SHIFT_DOWN_MASK)) == 0) {
-                boolean show = ev.getY() < MENU_HEIGHT;
-                if (show != showMenu) {
-                    showMenu = show;
-                    parent.repaint();
-                }
+            if (!showMenu && (ev.getModifiersEx() & (BUTTON1_DOWN_MASK | BUTTON2_DOWN_MASK | BUTTON3_DOWN_MASK)) != 0)
+                return;
+            boolean show = ev.getY() < MENU_HEIGHT;
+            if (show != showMenu) {
+                showMenu = show;
+                highlight = null;
+                parent.repaint();
             }
         }
 
+        private void doMouseDragged(MouseEvent ev) {
+            if (showMenu && highlight != null) {
+                if (!highlight.contains(ev, parent.getWidth())) {
+                    highlight = null;
+                    parent.repaint();
+                }
+            }
+            doMouseMoved(ev);
+        }
+        
         void paint(Graphics2D gg) {
             gg.setColor(new Color(80, 80, 80, 210));
             gg.fillRect(0, 0, parent.getWidth(), MENU_HEIGHT);
-            gg.setColor(Color.GREEN.brighter());
             FontMetrics fm = gg.getFontMetrics();
             int y = fm.getHeight();
             for (MenuItem item : items) {
-                gg.drawLine(item.x, 0, item.x, MENU_HEIGHT);
-                gg.drawLine(item.x+item.w, 0, item.x+item.w, MENU_HEIGHT);
-                int x = item.x + (item.w - fm.stringWidth(item.text)) / 2;
+                int x = item.x<0 ? item.x+parent.getWidth() : item.x;
+                if (item == highlight) {
+                    gg.setColor(Color.GREEN.darker());
+                    gg.fillRect(x, 0, item.w, MENU_HEIGHT);
+                }
+                gg.setColor(Color.GREEN.brighter());
+                gg.drawLine(x, 0, x, MENU_HEIGHT);
+                gg.drawLine(x+item.w, 0, x+item.w, MENU_HEIGHT);
+                x += (item.w - fm.stringWidth(item.text)) / 2;
                 gg.drawString(item.text, x, y);
             }
         }
@@ -152,11 +189,24 @@ public class FullPanel extends JPanel {
             final String text;
             final int x;
             final int w;
+            final Runnable action;
             
-            private MenuItem(String text, int x, int w) {
+            private MenuItem(String text, int x, int w, Runnable action) {
                 this.text = text;
                 this.x = x;
                 this.w = w;
+                this.action = action;
+            }
+            
+            private boolean contains(MouseEvent ev, int width) {
+                int left = x < 0 ? x + width : x;
+                int right = left + w;
+                return left <= ev.getX() && ev.getX() <= right;
+            }
+            
+            @Override
+            public String toString() {
+                return text;
             }
         }
     }
