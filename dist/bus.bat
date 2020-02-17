@@ -1,1 +1,1 @@
-@java -jar puzzle.jar bus.jpg 10 random 150x55
+@java -jar puzzle.jar bus.jpg 150x55
