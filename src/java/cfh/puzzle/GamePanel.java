@@ -61,7 +61,7 @@ public class GamePanel extends JPanel implements GameListener {
     
     private final List<Piece> pieces = new ArrayList<>();
     
-    private static final Integer KEY_HISTORY = KeyEvent.VK_SPACE; 
+    private static final Integer KEY_HISTORY = KeyEvent.VK_BACK_SPACE; 
     private final Map<Integer, Point> bookmarks = new HashMap<>();
 
     private static final int KEY_NO_GROUP = KeyEvent.VK_SPACE;
@@ -481,6 +481,9 @@ public class GamePanel extends JPanel implements GameListener {
             if (SwingUtilities.isLeftMouseButton(ev)) {
                 pressedX = ev.getX();
                 pressedY = ev.getY();
+                gameX = getX();
+                gameY = getY();
+                putBookmark(KEY_HISTORY, getLocation());
             } else if (SwingUtilities.isMiddleMouseButton(ev)) {
                 if (detail == null) {
                     detail = new JWindow(getRootFrame());
