@@ -4,6 +4,9 @@ import java.awt.Toolkit;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -15,6 +18,8 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 public class Sound {
 
+    private final Executor executor;
+    
     private final Sample pieceJoin;
     private final Sample pieceDisconnect;
     private final Sample groupSelect;
@@ -23,6 +28,15 @@ public class Sound {
     private final Sample posSet;
     
     Sound() {
+        executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread thread = Executors.defaultThreadFactory().newThread(r);
+                thread.setDaemon(true);
+                return thread;
+            }
+        });
+        
         pieceJoin = load("resources/pieceJoin.wav");
         pieceDisconnect = load("resources/pieceDisconnect.wav");
         groupSelect = load("resources/groupSelect.wav");
@@ -57,18 +71,20 @@ public class Sound {
 
     // TODO thread?
     private void play(Sample sample) {
-        if (sample == null) {
-            Toolkit.getDefaultToolkit().beep();
-        } else {
-            try (SourceDataLine line = AudioSystem.getSourceDataLine(sample.format)) {
-                line.open();
-                line.start();
-                line.write(sample.data, 0, sample.data.length);
-                line.drain();
-            } catch (LineUnavailableException ex) {
-                ex.printStackTrace();
+        executor.execute(() -> {
+            if (sample == null) {
+                Toolkit.getDefaultToolkit().beep();
+            } else {
+                try (SourceDataLine line = AudioSystem.getSourceDataLine(sample.format)) {
+                    line.open();
+                    line.start();
+                    line.write(sample.data, 0, sample.data.length);
+                    line.drain();
+                } catch (LineUnavailableException ex) {
+                    ex.printStackTrace();
+                }
             }
-        }
+        });
     }
     
     private Sample load(String location) {
