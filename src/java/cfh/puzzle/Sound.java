@@ -26,6 +26,7 @@ public class Sound {
     private final Sample groupCopy;
     private final Sample posMark;
     private final Sample posSet;
+    private final Sample complete;
     
     Sound() {
         executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
@@ -43,6 +44,7 @@ public class Sound {
         groupCopy = load("resources/groupCopy.wav");
         posMark = load("resources/posMark.wav");
         posSet = load("resources/posSet.wav");
+        complete = load("resources/complete.wav");
     }
     
     public void pieceJoin() {
@@ -67,6 +69,10 @@ public class Sound {
     
     public void posSet() {
         play(posSet);
+    }
+    
+    public void complete() {
+        play(complete);
     }
 
     // TODO thread?

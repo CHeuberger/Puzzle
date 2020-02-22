@@ -225,6 +225,9 @@ public class GamePanel extends JPanel implements GameListener {
             }
             piece.connect(next);
             sound.pieceJoin();
+            if (piece.getGroup().size() == pieces.size()) {
+                sound.complete();
+            }
         }
     }
 
