@@ -21,8 +21,7 @@ import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.CompoundBorder;
+import javax.swing.border.Border;
 
 
 public class FullPanel extends JPanel {
@@ -36,10 +35,10 @@ public class FullPanel extends JPanel {
 
     FullPanel() {
         setBackground(Color.BLACK);
-        setBorder(new CompoundBorder(
-                new BevelBorder(BevelBorder.RAISED, Color.GRAY.brighter(), Color.GRAY.darker()),
-                new BevelBorder(BevelBorder.LOWERED, Color.GRAY.brighter(), Color.GRAY.darker())
-                ));
+//        setBorder(new CompoundBorder(
+//                new BevelBorder(BevelBorder.RAISED, Color.GRAY.brighter(), Color.GRAY.darker()),
+//                new BevelBorder(BevelBorder.LOWERED, Color.GRAY.brighter(), Color.GRAY.darker())
+//                ));
 //        setBorder(new javax.swing.border.LineBorder(Color.BLUE, 10));
         setLayout(null);
         
@@ -57,10 +56,16 @@ public class FullPanel extends JPanel {
         super.paintChildren(g);
         Graphics2D gg = (Graphics2D) g.create();
         try {
-            Insets border = getBorder().getBorderInsets(this);
-            gg.translate(border.left, border.top);
-            int w = getWidth()-border.left-border.right;
-            gg.setClip(0, 0, w, getHeight()-border.top-border.bottom);
+            Border border = getBorder();
+            int w = getWidth();
+            int h = getHeight();
+            if (border != null) {
+                Insets insets = border.getBorderInsets(this);
+                gg.translate(insets.left, insets.top);
+                w -= insets.left + insets.right;
+                h -= insets.top + insets.bottom;
+                gg.setClip(0, 0, w, h);
+            }
             if (testImage != null) {
                 gg.drawImage(testImage, 50, -5, 120, 120, this);
             }

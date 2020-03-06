@@ -30,8 +30,8 @@ public class FullScreen {
             }
         });
         frame.setContentPane(mainPanel);
-        frame.setDefaultCloseOperation(frame.DO_NOTHING_ON_CLOSE);
-        frame.setUndecorated(true);
+        frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
+        frame.setUndecorated(false);
         frame.getContentPane().setBackground(Color.BLACK);
         frame.setSize(600, 600);
         frame.setLocationRelativeTo(null);
