@@ -35,6 +35,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
+
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -79,9 +82,21 @@ public class Test extends GamePanel {
                         + "    <type>      11 = normal, 21 = debug, others for testing\n"
                         + "    <seed>      random = random seed, else the seed number\n"
                         + "    <count>     piece number\n"
-                        + "    <template>  50, 55, 60, 65, 85 = piece template"
+                        + "    <template>  50, 55, 60, 65, 85 = piece template\n"
+                        + "\n"
+                        + "java -jar puzzle.jar -clear\n"
+                        + "    clears preferences"
                         );
                 return;
+            } else if (opt.equals("clear")) {
+                Preferences prefs = Preferences.userRoot().node("/" + Test.class.getName().replace('.', '/'));
+                try {
+                    prefs.clear();
+                } catch (BackingStoreException ex) {
+                    ex.printStackTrace();
+                    errorMessage(ex);
+                    return;
+                }
             } else {
                 errorMessage("unrecognized option", args[index-1]);
                 return;
