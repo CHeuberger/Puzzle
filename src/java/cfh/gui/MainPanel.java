@@ -12,22 +12,48 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import javax.print.attribute.standard.PresentationDirection;
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
 
 
 public class MainPanel extends JPanel {
     
+    private static final int RESIZE_BORDER = 16;
+    private static final int MODIFIER_KEYS = MouseEvent.SHIFT_DOWN_MASK 
+                                           | MouseEvent.CTRL_DOWN_MASK 
+                                           | MouseEvent.ALT_DOWN_MASK 
+                                           | MouseEvent.META_DOWN_MASK;
+
     private final List<SubPanel> panels = new ArrayList<>();
 
     public MainPanel() {
         setBackground(Color.BLACK);
-        setBorder(new javax.swing.border.LineBorder(Color.BLUE, 20));
+        // XXX
+//        setBorder(new CompoundBorder(
+//            new BevelBorder(BevelBorder.RAISED, Color.GRAY.brighter(), Color.GRAY.darker()),
+//            new BevelBorder(BevelBorder.LOWERED, Color.GRAY.brighter(), Color.GRAY.darker())
+//      ));
+//        setBorder(new javax.swing.border.LineBorder(Color.BLUE, 20));
+        setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.GREEN),
+            "test",
+            TitledBorder.DEFAULT_JUSTIFICATION,
+            TitledBorder.DEFAULT_POSITION,
+            null,
+            Color.GREEN
+            ));
         setLayout(null);
 
-        PanelDragged adapter = new PanelDragged();
-        addMouseListener(adapter);
-        addMouseMotionListener(adapter);
+        MainDrag mainDrag = new MainDrag();
+        addMouseListener(mainDrag);
+        addMouseMotionListener(mainDrag);
+        
+        SubPanelDrag subDrag = new SubPanelDrag();
+        addMouseListener(subDrag);
+        addMouseMotionListener(subDrag);
     }
     
     public void add(SubPanel panel) {
@@ -54,19 +80,59 @@ public class MainPanel extends JPanel {
         }
     }
     
+    private boolean isDrag(MouseEvent ev) {
+        return (ev.getModifiersEx() & MODIFIER_KEYS) == ev.CTRL_DOWN_MASK; 
+    }
+    
+    // XXX
+    public static void debug(String format, Object... args) {
+        System.out.printf(format, args);
+        System.out.flush();
+    }
+    
     //==================================================================================================================
     
-    private class PanelDragged extends MouseAdapter {
+    private class MainDrag extends MouseAdapter {
         
-        private final int RESIZE = 20;
-        private final int MODIFIER_KEYS = MouseEvent.SHIFT_DOWN_MASK | MouseEvent.CTRL_DOWN_MASK | MouseEvent.ALT_DOWN_MASK | MouseEvent.META_DOWN_MASK;
+        private Point pressed = null;
+        
+        @Override
+        public void mousePressed(MouseEvent ev) {
+            debug("pressed: %s%n", ev);
+            if (isDrag(ev) && ev.getButton() == ev.BUTTON1) {
+                if (   ev.getX() <= RESIZE_BORDER || ev.getX() >= getWidth()-RESIZE_BORDER
+                    || ev.getY() <= RESIZE_BORDER || ev.getY() >= getHeight()-RESIZE_BORDER) {
+                    pressed = ev.getPoint();
+                } else {
+                    pressed = null;
+                }
+                debug("    %s%n", pressed);
+            }
+        }
+        
+        @Override
+        public void mouseReleased(MouseEvent ev) {
+            debug("released: %s%n", ev);
+            pressed = null;
+        }
+        
+        @Override
+        public void mouseDragged(MouseEvent ev) {
+            if (pressed != null && isDrag(ev)) {
+                debug("dragged: %s%n", ev);
+            }
+        }
+    }
+    
+    //==================================================================================================================
+    
+    private class SubPanelDrag extends MouseAdapter {
         
         private SubPanel dragging = null;
         private Point pressed = null;
         
         @Override
         public void mousePressed(MouseEvent ev) {
-            System.out.println(ev);
             pressed = ev.getPoint();
             if (isDrag(ev) && ev.getButton() == ev.BUTTON1) {
                 dragging = panels
@@ -75,33 +141,32 @@ public class MainPanel extends JPanel {
                 .filter(p -> p.getBounds().contains(pressed))
                 .findFirst()
                 .orElse(null);
-                System.out.println(dragging);
+                if (dragging != null) {
+                    setComponentZOrder(dragging, 0);
+                    repaint();
+                }
             }
         }
         
         @Override
         public void mouseReleased(MouseEvent ev) {
-            System.out.println(ev);
-            if (isDrag(ev) && ev.getButton() == ev.BUTTON1) {
-                dragging = null;
-            }
+            dragging = null;
         }
         
         @Override
         public void mouseDragged(MouseEvent ev) {
-            System.out.println(ev);
             if (dragging != null && isDrag(ev)) {
                 int dx = ev.getX() - pressed.x;
                 int dy = ev.getY() - pressed.y;
                 Rectangle bounds = dragging.getBounds();
                 int px = pressed.x - bounds.x;
                 int py = pressed.y - bounds.y;
-                if (px >= bounds.width-RESIZE && py >= bounds.height-RESIZE) {
+                if (px >= bounds.width-RESIZE_BORDER && py >= bounds.height-RESIZE_BORDER) {
                     bounds.width += dx;
                     bounds.height += dy;
-                } else if (px >= bounds.width-RESIZE) {
+                } else if (px >= bounds.width-RESIZE_BORDER) {
                     bounds.width += dx;
-                } else if (py >= bounds.height-RESIZE) {
+                } else if (py >= bounds.height-RESIZE_BORDER) {
                     bounds.height += dy;
 //                } else if (px <= RESIZE && py <= RESIZE) {
 //                    bounds.x += dx;
@@ -118,20 +183,16 @@ public class MainPanel extends JPanel {
                     bounds.x += dx;
                     bounds.y += dy;
                 }
-                if (bounds.width < 2*RESIZE) {
-                    bounds.width = 2*RESIZE;
+                if (bounds.width < RESIZE_BORDER) {
+                    bounds.width = RESIZE_BORDER;
                 }
-                if (bounds.height < 2*RESIZE) {
-                    bounds.height = 2*RESIZE;
+                if (bounds.height < RESIZE_BORDER) {
+                    bounds.height = RESIZE_BORDER;
                 }
                 dragging.setBounds(bounds);
                 pressed = ev.getPoint();
                 repaint();
             }
-        }
-        
-        private boolean isDrag(MouseEvent ev) {
-            return (ev.getModifiersEx() & MODIFIER_KEYS) == ev.CTRL_DOWN_MASK; 
         }
     }
 }
