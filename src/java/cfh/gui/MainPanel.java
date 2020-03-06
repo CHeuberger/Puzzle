@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.print.attribute.standard.PresentationDirection;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
@@ -31,7 +30,7 @@ public class MainPanel extends JPanel {
 
     public MainPanel() {
         setBackground(Color.BLACK);
-        // XXX
+//        XXX
 //        setBorder(new CompoundBorder(
 //            new BevelBorder(BevelBorder.RAISED, Color.GRAY.brighter(), Color.GRAY.darker()),
 //            new BevelBorder(BevelBorder.LOWERED, Color.GRAY.brighter(), Color.GRAY.darker())
@@ -47,10 +46,6 @@ public class MainPanel extends JPanel {
             ));
         setLayout(null);
 
-        MainDrag mainDrag = new MainDrag();
-        addMouseListener(mainDrag);
-        addMouseMotionListener(mainDrag);
-        
         SubPanelDrag subDrag = new SubPanelDrag();
         addMouseListener(subDrag);
         addMouseMotionListener(subDrag);
@@ -84,44 +79,10 @@ public class MainPanel extends JPanel {
         return (ev.getModifiersEx() & MODIFIER_KEYS) == ev.CTRL_DOWN_MASK; 
     }
     
-    // XXX
+//    XXX
     public static void debug(String format, Object... args) {
         System.out.printf(format, args);
         System.out.flush();
-    }
-    
-    //==================================================================================================================
-    
-    private class MainDrag extends MouseAdapter {
-        
-        private Point pressed = null;
-        
-        @Override
-        public void mousePressed(MouseEvent ev) {
-            debug("pressed: %s%n", ev);
-            if (isDrag(ev) && ev.getButton() == ev.BUTTON1) {
-                if (   ev.getX() <= RESIZE_BORDER || ev.getX() >= getWidth()-RESIZE_BORDER
-                    || ev.getY() <= RESIZE_BORDER || ev.getY() >= getHeight()-RESIZE_BORDER) {
-                    pressed = ev.getPoint();
-                } else {
-                    pressed = null;
-                }
-                debug("    %s%n", pressed);
-            }
-        }
-        
-        @Override
-        public void mouseReleased(MouseEvent ev) {
-            debug("released: %s%n", ev);
-            pressed = null;
-        }
-        
-        @Override
-        public void mouseDragged(MouseEvent ev) {
-            if (pressed != null && isDrag(ev)) {
-                debug("dragged: %s%n", ev);
-            }
-        }
     }
     
     //==================================================================================================================
