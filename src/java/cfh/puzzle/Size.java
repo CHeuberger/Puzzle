@@ -2,25 +2,47 @@ package cfh.puzzle;
 
 import java.io.Serializable;
 
-public interface Size extends Serializable {
+public abstract class Size implements Serializable {
 
-    public int getCount();
+    private transient int width;
+    private transient int height;
     
-    public int getSizeX();
-    public int getSizeY();
+    protected Size() {
+    }
+    
+    
+    void width(int width) {
+        this.width= width;
+    }
+    
+    public int width() {
+        return width;
+    }
+    
+    void height(int height) {
+        this.height = height;
+    }
+    
+    public int height() {
+        return height;
+    }
+    
+    public abstract int getCount();
+    public abstract int getSizeX();
+    public abstract int getSizeY();
 
-    public int getOverlap();
-    public int getBaseVariation();
+    public abstract int getOverlap();
+    public abstract int getBaseVariation();
 
-    public int getBorderWidth();
+    public abstract int getBorderWidth();
 
-    public int getPegWidth();
-    public int getPegLength();
-    public int getPegRadius();
+    public abstract int getPegWidth();
+    public abstract int getPegLength();
+    public abstract int getPegRadius();
 
-    public int getPegPositionDelta();
-    public int getPegRadiusDelta();
-    public int getPegHeightDelta();
+    public abstract int getPegPositionDelta();
+    public abstract int getPegRadiusDelta();
+    public abstract int getPegHeightDelta();
 
-    public int getEdgeColorChange();
+    public abstract int getEdgeColorChange();
 }

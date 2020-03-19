@@ -1,6 +1,6 @@
 package cfh.puzzle;
 
-public class ConstSizeImpl implements Size {
+public class ConstSizeImpl extends Size {
 
     private final int count;
     private final int sizeX;
