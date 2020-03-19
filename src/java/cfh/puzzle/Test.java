@@ -279,7 +279,7 @@ public class Test extends GamePanel {
         setOpaque(false);
         setSize(MAXX, MAXY);
         
-        frame = new JFrame(VERSION + " - " + title);
+        frame = new JFrame(String.format("%s - %s - %d (%dx%d)", VERSION, title, size.width()*size.height(), size.width(), size.height()));
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -447,6 +447,9 @@ public class Test extends GamePanel {
                 }
             }
         }
+        
+        puzzleSize.width(X);
+        puzzleSize.height(Y);
         
         setImage(image);
 

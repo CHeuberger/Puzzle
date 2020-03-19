@@ -1,8 +1,10 @@
 package cfh.puzzle;
 
 
-public class TemplateSizeImpl implements Size {
+public class TemplateSizeImpl extends Size {
 
+    private static final long serialVersionUID = -6632672313729655764L;
+    
     private final int count;
     private final Template template;
 
